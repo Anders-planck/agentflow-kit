@@ -7,7 +7,7 @@ import { createInterface } from "node:readline/promises";
 
 import { formatCommand } from "./commands.js";
 import { runDoctor } from "./doctor.js";
-import { applyPlan, rollbackLatest } from "./executor.js";
+import { applyPlan, rollbackLatest, uninstallAll } from "./executor.js";
 import { findProjectRoot, pathExists, resolveAppPaths } from "./paths.js";
 import { buildInstallPlan } from "./planner.js";
 import { applyProjectInit, planProjectInit } from "./project.js";
@@ -33,6 +33,7 @@ function parseArguments(argv: string[]): ParsedArguments {
     json: false,
     yes: false,
     skipExternal: false,
+    adoptExisting: false,
   };
   let directory = process.cwd();
   while (values.length) {
@@ -46,6 +47,7 @@ function parseArguments(argv: string[]): ParsedArguments {
       case "--json": options.json = true; break;
       case "--yes": options.yes = true; break;
       case "--skip-external": options.skipExternal = true; break;
+      case "--adopt-existing": options.adoptExisting = true; break;
       case "--help": return { command: "help", options, directory };
       default: throw new Error(`Unknown argument: ${flag}`);
     }
@@ -134,12 +136,17 @@ async function main(): Promise<void> {
     if (checks.some((check) => check.status === "fail")) process.exitCode = 1;
     return;
   }
-  if (command === "rollback" || command === "uninstall") {
-    const previewUninstall = command === "uninstall" && !options.yes;
-    const manifest = await rollbackLatest({ ...options, dryRun: options.dryRun || previewUninstall });
-    if (options.dryRun || previewUninstall) {
-      console.log(options.json ? JSON.stringify(manifest, null, 2) : `Would restore ${manifest.snapshots.length} paths from ${manifest.backupDir}; pass --yes to apply`);
-    } else console.log(options.json ? JSON.stringify(manifest, null, 2) : `Restored state from ${manifest.backupDir}`);
+  if (command === "rollback") {
+    const manifest = await rollbackLatest(options);
+    console.log(options.json ? JSON.stringify(manifest, null, 2) : `${options.dryRun ? "Would restore" : "Restored"} ${manifest.snapshots.length} paths from ${manifest.backupDir}`);
+    return;
+  }
+  if (command === "uninstall") {
+    const preview = options.dryRun || !options.yes;
+    const manifests = await uninstallAll({ ...options, dryRun: preview });
+    const paths = manifests.reduce((total, manifest) => total + manifest.snapshots.length, 0);
+    if (preview) console.log(options.json ? JSON.stringify(manifests, null, 2) : `Would unwind ${manifests.length} changesets and restore ${paths} paths; pass --yes to apply`);
+    else console.log(options.json ? JSON.stringify(manifests, null, 2) : `Uninstalled Agentflow by unwinding ${manifests.length} changesets`);
     return;
   }
   if (command === "project" && parsed.subcommand === "init") {
@@ -171,7 +178,7 @@ Commands:
   doctor           Inspect clients, integrations, and skill divergence
   update           Reconcile the selected preset with the installed release
   rollback         Restore the latest pre-install snapshot
-  uninstall        Preview removal; add --yes to restore the latest snapshot
+  uninstall        Preview removal; add --yes to unwind every changeset
   project init     Create .agentflow/project.yaml without overwriting
   validate         Validate repository YAML, skills, and public-safety rules
   version          Print toolkit version
@@ -185,6 +192,7 @@ Options:
   --yes            Apply without an interactive confirmation
   --json           Machine-readable output
   --skip-external  Skip network fetches and external client commands
+  --adopt-existing Back up and replace conflicting copies with shared links
 `);
 }
 

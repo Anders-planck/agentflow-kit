@@ -67,13 +67,16 @@ agentflow init          Create user-level Agentflow preferences
 agentflow doctor        Check clients, integrations, binaries, and skill drift
 agentflow update        Reconcile the current release and preset
 agentflow rollback      Restore the latest pre-install snapshot
-agentflow uninstall     Preview removal; add --yes to restore the snapshot
+agentflow uninstall     Preview removal; add --yes to unwind all changesets
 agentflow project init  Add a non-destructive project marker
 agentflow validate      Validate registries, skills, and public safety
 ```
 
 All mutating workflows support `--dry-run`; automation can use `--yes --json`.
 Use `--home <temporary-directory>` to test without touching the real home.
+Conflicting skill directories are preserved by default. Use `--adopt-existing`
+to back them up and replace them with links to the managed release. `uninstall`
+unwinds the complete changeset history, including updates and adoptions.
 
 ## One-file configuration
 

@@ -29,12 +29,34 @@ async function directoryNames(path: string): Promise<string[]> {
   }
 }
 
-async function planSymlink(items: PlanItem[], id: string, source: string, target: string): Promise<void> {
+async function planSymlink(items: PlanItem[], id: string, source: string, target: string, adoptExisting = false): Promise<void> {
   try {
     const stat = await lstat(target);
     if (stat.isSymbolicLink()) {
       const current = await readlink(target);
       if (current === source) return;
+    }
+    if (stat.isDirectory() && await directoryDigest(source) === await directoryDigest(target)) {
+      items.push({
+        kind: "symlink",
+        id,
+        description: `Adopt content-identical skill ${target}`,
+        source,
+        target,
+        replaceExisting: true,
+      });
+      return;
+    }
+    if (adoptExisting) {
+      items.push({
+        kind: "symlink",
+        id,
+        description: `Back up and adopt existing skill ${target}`,
+        source,
+        target,
+        replaceExisting: true,
+      });
+      return;
     }
     items.push({
       kind: "notice",
@@ -178,10 +200,10 @@ export async function buildInstallPlan(options: GlobalOptions): Promise<InstallP
   for (const name of skillNames) {
     const source = join(releaseSkills, name);
     if (clients.codex || clients.opencode) {
-      await planSymlink(items, `agents-skill-${name}`, source, join(appPaths.home, ".agents", "skills", name));
+      await planSymlink(items, `agents-skill-${name}`, source, join(appPaths.home, ".agents", "skills", name), options.adoptExisting);
     }
     if (clients.claude) {
-      await planSymlink(items, `claude-skill-${name}`, source, join(appPaths.home, ".claude", "skills", name));
+      await planSymlink(items, `claude-skill-${name}`, source, join(appPaths.home, ".claude", "skills", name), options.adoptExisting);
     }
   }
 

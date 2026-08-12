@@ -71,7 +71,7 @@ export interface CommandSpec {
 
 export type PlanItem =
   | { kind: "write"; id: string; description: string; target: string; content: string }
-  | { kind: "symlink"; id: string; description: string; target: string; source: string }
+  | { kind: "symlink"; id: string; description: string; target: string; source: string; replaceExisting?: boolean }
   | { kind: "copy-dir"; id: string; description: string; target: string; source: string }
   | { kind: "external-skills"; id: string; description: string; target: string; sourceName: string; skillSet: string }
   | { kind: "command"; id: string; description: string; spec: CommandSpec }
@@ -116,4 +116,5 @@ export interface GlobalOptions {
   json: boolean;
   yes: boolean;
   skipExternal: boolean;
+  adoptExisting?: boolean;
 }
