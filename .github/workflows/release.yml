@@ -5,7 +5,9 @@ on:
     tags: ["v*"]
 
 permissions:
-  contents: read
+  contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   pack:
@@ -14,12 +16,34 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
       - run: npm ci
-      - run: npm test
-      - run: npm pack
+      - name: Verify tag matches package version
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - run: npm run check
+      - name: Pack and checksum
+        run: |
+          npm pack
+          sha256sum orditra-*.tgz > SHA256SUMS
+      - name: Attest npm package
+        uses: actions/attest@v4
+        with:
+          subject-path: "orditra-*.tgz"
       - uses: actions/upload-artifact@v7
         with:
           name: npm-package
-          path: "*.tgz"
+          path: |
+            orditra-*.tgz
+            SHA256SUMS
+      - name: Create GitHub pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          orditra-*.tgz SHA256SUMS
+          --repo "$GITHUB_REPOSITORY"
+          --title "Orditra $GITHUB_REF_NAME"
+          --generate-notes
+          --prerelease

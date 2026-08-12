@@ -43,9 +43,18 @@
     "ast-grep"
   ],
   "license": "MIT",
+  "author": "Anders-planck",
+  "homepage": "https://github.com/Anders-planck/orditra#readme",
+  "bugs": {
+    "url": "https://github.com/Anders-planck/orditra/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Anders-planck/orditra.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "dependencies": {
     "jsonc-parser": "^3.3.1",

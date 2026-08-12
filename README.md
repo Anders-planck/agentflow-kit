@@ -9,8 +9,8 @@ The name **Orditra** is coined from the Italian *ordito* (the warp that holds a
 fabric together) and orchestration: one durable configuration fabric across
 different coding agents.
 
-> Status: `0.1.0` development preview. The public GitHub repository is live;
-> the npm package is not published yet.
+> Status: `0.1.0` public pre-release. GitHub artifacts include a SHA-256
+> checksum and build attestation; npm publication is prepared separately.
 
 ## What it manages
 

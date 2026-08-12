@@ -3,7 +3,7 @@
 All notable changes are documented here. This project follows Semantic
 Versioning.
 
-## 0.1.0 - Unreleased
+## 0.1.0 - 2026-08-12
 
 - Adopt the original public name Orditra, with automatic migration from the
   provisional pre-release name.
