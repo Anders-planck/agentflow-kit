@@ -1,13 +1,19 @@
-schemaVersion: 1
+schemaVersion: 2
 name: recommended
-description: The tested engineering flow with context protection and semantic tools.
-components:
-  policies: true
-  bundledSkills: true
-  externalSkills: true
-  contextMode: true
-  serena: true
-  astGrep: true
+description: Context-efficient engineering with semantic, structural, documentation, reporting, and security capabilities.
+capabilities:
+  policies: { mode: always }
+  workflow-core: { mode: always }
+  external-skills: { mode: always }
+  context-protection: { mode: always, provider: context-mode }
+  semantic-code: { mode: auto, provider: serena }
+  structural-search: { mode: auto, provider: ast-grep }
+  current-docs: { mode: auto, provider: context7 }
+  repository-map: { mode: registered, provider: repomix }
+  evidence-report: { mode: always }
+  agent-supply-chain: { mode: auto, provider: agent-scan }
+  dependency-vulnerability: { mode: auto, provider: osv-scanner }
+  action-security: { mode: project, provider: zizmor }
 externalSkillSets:
   - mattpocock-core
 

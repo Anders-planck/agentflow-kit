@@ -22,20 +22,21 @@ export function findProjectRoot(start = dirname(fileURLToPath(import.meta.url)))
   }
 }
 
-export function resolveAppPaths(home: string): AppPaths {
-  return resolveNamedAppPaths(home, "orditra");
+export function resolveAppPaths(home: string, environment: NodeJS.ProcessEnv = process.env): AppPaths {
+  return resolveNamedAppPaths(home, "orditra", environment);
 }
 
 /** Compatibility for installations made under the provisional pre-release name. */
-export function resolveLegacyAppPaths(home: string): AppPaths {
-  return resolveNamedAppPaths(home, "agentflow-kit");
+export function resolveLegacyAppPaths(home: string, environment: NodeJS.ProcessEnv = process.env): AppPaths {
+  return resolveNamedAppPaths(home, "agentflow-kit", environment);
 }
 
-function resolveNamedAppPaths(home: string, name: string): AppPaths {
+function resolveNamedAppPaths(home: string, name: string, environment: NodeJS.ProcessEnv): AppPaths {
   const normalizedHome = resolve(home);
-  const configDir = join(normalizedHome, ".config");
-  const dataDir = join(normalizedHome, ".local", "share");
-  const stateDir = join(normalizedHome, ".local", "state");
+  const portableRoot = environment.ORDITRA_PORTABLE_HOME ? resolve(environment.ORDITRA_PORTABLE_HOME) : undefined;
+  const configDir = portableRoot ? join(portableRoot, "config") : resolve(environment.XDG_CONFIG_HOME ?? join(normalizedHome, ".config"));
+  const dataDir = portableRoot ? join(portableRoot, "data") : resolve(environment.XDG_DATA_HOME ?? join(normalizedHome, ".local", "share"));
+  const stateDir = portableRoot ? join(portableRoot, "state") : resolve(environment.XDG_STATE_HOME ?? join(normalizedHome, ".local", "state"));
   return {
     home: normalizedHome,
     configDir,

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Structural Code Search"
+  short_description: "Search and rewrite syntax safely"
+  default_prompt: "Use $structural-code-search for AST-aware search, lint rules, or controlled rewrites."

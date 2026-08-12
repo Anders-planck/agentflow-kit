@@ -2,13 +2,14 @@
 name: workflow-router
 description: Routes engineering work to the smallest suitable skill flow and checks prerequisites. Use when a request spans setup, discovery, planning, implementation, diagnosis, architecture, verification, or handoff and the correct workflow is not already explicit.
 license: MIT
-compatibility: Requires Agent Skills support; uses only skills available in the active client.
 metadata:
   author: orditra
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Workflow Router
+
+Requires Agent Skills support and uses only skills available in the active client.
 
 ## Route
 
@@ -33,4 +34,3 @@ See [routing reference](references/routing.md) for stage mappings and conflicts.
 
 State the chosen skill or compact flow only when doing so helps the user follow
 the work. Continue directly when routing is obvious.
-

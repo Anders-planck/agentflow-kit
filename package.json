@@ -1,6 +1,6 @@
 {
   "name": "orditra",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "One reversible configuration fabric for Codex, Claude Code, and OpenCode.",
   "type": "module",
   "bin": {
@@ -8,24 +8,34 @@
   },
   "files": [
     "dist",
+    ".codex-plugin",
+    ".agents/plugins/marketplace.json",
+    ".mcp.json",
     "presets",
     "registry",
     "policies",
     "skills",
     "ast-grep",
+    "schemas",
+    "evals",
     "config",
     "docs",
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
     "SECURITY.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/postbuild.mjs",
     "clean": "node scripts/clean.mjs",
-    "test": "npm run build && node --test dist/test/**/*.test.js",
+    "test": "npm run build && npm run test:compiled",
+    "test:compiled": "node --test dist/test/**/*.test.js",
     "test:unit": "npm run build && node --test dist/test/unit/*.test.js",
-    "check": "npm run build && npm test && node dist/src/cli.js validate --root .",
+    "coverage": "npm run build && node --experimental-test-coverage --test-coverage-lines=80 --test-coverage-branches=80 --test-coverage-functions=80 --test dist/test/**/*.test.js",
+    "validate": "node dist/src/cli.js validate --root .",
+    "eval": "npx --yes promptfoo@0.122.0 eval -c evals/promptfooconfig.yaml",
+    "check": "npm run build && npm run test:compiled && npm run validate",
     "prepare": "npm run build"
   },
   "engines": {
@@ -57,11 +67,13 @@
     "provenance": true
   },
   "dependencies": {
-    "jsonc-parser": "^3.3.1",
-    "yaml": "^2.8.1"
+    "ajv": "8.20.0",
+    "commander": "15.0.0",
+    "jsonc-parser": "3.3.1",
+    "yaml": "2.9.0"
   },
   "devDependencies": {
-    "@types/node": "^24.10.0",
-    "typescript": "^5.9.3"
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3"
   }
 }

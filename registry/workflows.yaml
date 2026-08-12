@@ -20,6 +20,8 @@ stages:
         source: mattpocock
       - skill: prototype
         source: mattpocock
+      - skill: large-codebase-map
+        source: orditra
   planning:
     description: Turn decisions into a spec and independently grabbable work.
     routes:
@@ -53,14 +55,41 @@ stages:
     routes:
       - skill: improve-codebase-architecture
         source: mattpocock
+      - skill: dependency-architecture
+        source: orditra
   verification:
     description: Review behavior, standards, tests, and produced artifacts.
     routes:
       - skill: code-review
         source: mattpocock
+      - skill: verification-gate
+        source: orditra
+      - skill: browser-qa
+        source: orditra
+  documentation:
+    description: Verify current APIs and dependencies against primary documentation.
+    routes:
+      - skill: current-docs
+        source: orditra
+  reporting:
+    description: Render structured findings into reviewable and machine-readable artifacts.
+    routes:
+      - skill: evidence-report
+        source: orditra
+      - skill: performance-report
+        source: orditra
+  security:
+    description: Audit agent components, dependencies, workflows, and external providers.
+    routes:
+      - skill: agent-supply-chain
+        source: orditra
+  evaluation:
+    description: Verify routing and skill behavior across supported clients.
+    routes:
+      - skill: verification-gate
+        source: orditra
   handoff:
     description: Preserve decisions, state, and next actions across people or sessions.
     routes:
       - skill: handoff
         source: mattpocock
-

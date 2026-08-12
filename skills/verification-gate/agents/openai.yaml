@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verification Gate"
+  short_description: "Verify evidence before completion"
+  default_prompt: "Use $verification-gate to verify this task before declaring it complete."

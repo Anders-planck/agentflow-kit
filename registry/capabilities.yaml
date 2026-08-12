@@ -1,0 +1,152 @@
+schemaVersion: 2
+capabilities:
+  policies:
+    description: Shared and client-specific agent guidance.
+    defaultProvider: orditra-policy
+    defaultMode: always
+    risk: low
+  workflow-core:
+    description: Compact global workflow routing and project bootstrap.
+    defaultProvider: orditra-skills
+    defaultMode: always
+    risk: low
+    skills: [workflow-router, project-bootstrap, verification-gate]
+  external-skills:
+    description: Reviewed external workflow skills from immutable sources.
+    defaultProvider: orditra-skill-lock
+    defaultMode: auto
+    risk: medium
+  context-protection:
+    description: Route large outputs through context-mode.
+    defaultProvider: context-mode
+    defaultMode: auto
+    risk: medium
+  semantic-code:
+    description: Symbol discovery, references, call relationships, and precise semantic edits.
+    defaultProvider: serena
+    defaultMode: auto
+    risk: medium
+    skills: [serena-symbolic-code]
+  structural-search:
+    description: AST-aware pattern search, lint rules, and controlled codemods.
+    defaultProvider: ast-grep
+    defaultMode: auto
+    risk: low
+    skills: [structural-code-search]
+  current-docs:
+    description: Current version-specific dependency and API documentation.
+    defaultProvider: context7
+    defaultMode: registered
+    risk: medium
+    skills: [current-docs]
+  repository-map:
+    description: Token-budgeted repository signatures and file token counts.
+    defaultProvider: repomix
+    defaultMode: registered
+    risk: low
+    conflicts: [large-code-search]
+    projectSignals: [large-repository]
+    skills: [large-codebase-map]
+  large-code-search:
+    description: Token-aware AST/BM25 search for very large local repositories.
+    defaultProvider: probe
+    defaultMode: off
+    risk: medium
+    conflicts: [repository-map]
+    projectSignals: [large-repository]
+    skills: [large-codebase-map]
+  evidence-report:
+    description: Human and machine-readable evidence reports.
+    defaultProvider: orditra-reporting
+    defaultMode: always
+    risk: low
+    skills: [evidence-report]
+  visual-export:
+    description: Optional polished architecture diagram export.
+    defaultProvider: d2
+    defaultMode: off
+    risk: low
+    skills: [evidence-report]
+  browser-qa:
+    description: Token-efficient browser automation and web quality checks.
+    defaultProvider: playwright-cli
+    defaultMode: project
+    risk: medium
+    projectSignals: [web]
+    skills: [browser-qa]
+  web-performance:
+    description: Browser performance traces, network inspection, and console diagnostics.
+    defaultProvider: chrome-devtools-mcp
+    defaultMode: off
+    risk: high
+    projectSignals: [web]
+    skills: [performance-report]
+  dependency-architecture:
+    description: Dependency graphs and enforceable module boundaries.
+    defaultProvider: dependency-cruiser
+    defaultMode: project
+    risk: low
+    projectSignals: [javascript, typescript]
+    skills: [dependency-architecture]
+  agent-supply-chain:
+    description: Scan skills, prompts, hooks, and MCP configuration before activation.
+    defaultProvider: agent-scan
+    defaultMode: auto
+    risk: low
+    skills: [agent-supply-chain]
+  dependency-vulnerability:
+    description: Multi-ecosystem dependency vulnerability scanning.
+    defaultProvider: osv-scanner
+    defaultMode: auto
+    risk: low
+  action-security:
+    description: Static analysis for GitHub Actions workflows.
+    defaultProvider: zizmor
+    defaultMode: project
+    risk: low
+    projectSignals: [github-actions]
+  evals:
+    description: Behavioral evaluation and red-team tests for skills and routing.
+    defaultProvider: promptfoo
+    defaultMode: registered
+    risk: medium
+  github-integration:
+    description: Authenticated GitHub repository, issue, pull request, and workflow tools.
+    defaultProvider: github-mcp
+    defaultMode: off
+    risk: high
+  local-knowledge:
+    description: Local indexed retrieval over large Markdown corpora.
+    defaultProvider: qmd
+    defaultMode: off
+    risk: medium
+  hardened-mcp:
+    description: Isolated MCP execution, registry, policy, and audit logging.
+    defaultProvider: toolhive
+    defaultMode: off
+    risk: medium
+  deep-security:
+    description: Optional heavyweight static and code-property-graph security analysis.
+    defaultProvider: semgrep
+    defaultMode: off
+    risk: medium
+  container-security:
+    description: Optional container, filesystem, and infrastructure-as-code security scanning.
+    defaultProvider: trivy
+    defaultMode: off
+    risk: medium
+  code-property-graph:
+    description: Optional heavyweight code-property-graph analysis.
+    defaultProvider: joern
+    defaultMode: off
+    risk: medium
+  persistent-symbol-graph:
+    description: Optional persistent multi-repository symbol interchange through SCIP.
+    defaultProvider: scip
+    defaultMode: off
+    risk: medium
+  telemetry:
+    description: Optional OpenTelemetry export for team observability.
+    defaultProvider: opentelemetry
+    defaultMode: off
+    risk: high

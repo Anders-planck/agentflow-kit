@@ -2,13 +2,14 @@
 name: project-bootstrap
 description: Initializes a repository for portable agent workflows without overwriting existing conventions. Use for new projects, when Orditra project markers are missing, or before skills that require issue-tracker, triage-label, CONTEXT.md, or ADR configuration.
 license: MIT
-compatibility: Requires the orditra CLI for deterministic file generation.
 metadata:
   author: orditra
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Project Bootstrap
+
+Requires the `orditra` CLI for deterministic file generation.
 
 ## Workflow
 
@@ -32,4 +33,3 @@ metadata:
 - Never commit local credentials or Serena memories.
 - Keep project config team-portable; put personal paths in ignored local files.
 - Run `setup-matt-pocock-skills` after bootstrap when installed.
-

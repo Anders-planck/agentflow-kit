@@ -1,0 +1,5 @@
+schemaVersion: 2
+name: telemetry
+description: Explicit team observability export.
+capabilities:
+  telemetry: { mode: project, provider: opentelemetry }

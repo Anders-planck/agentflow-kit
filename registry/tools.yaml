@@ -1,4 +1,4 @@
-schemaVersion: 1
+schemaVersion: 2
 tools:
   context-mode:
     kind: plugin
@@ -20,4 +20,30 @@ tools:
     commit: 5aa00e1dd5e0077589a6c0c23c640e39947403ec
     testedVersion: 0.43.0
     executables: [sg, ast-grep]
-
+  context7:
+    kind: mcp
+    provider: context7
+    source: https://github.com/upstash/context7
+    commit: ca15df0443ee770506fc4eb270d1efc71d483933
+    testedVersion: 4.0.2
+  repomix:
+    kind: cli
+    provider: repomix
+    source: https://github.com/yamadashy/repomix
+    commit: e3b15a406ed78d8a463620a032a059ce911bfc0e
+    testedVersion: 1.18.0
+    executable: repomix
+  playwright-cli:
+    kind: cli
+    provider: playwright-cli
+    source: https://github.com/microsoft/playwright-cli
+    commit: e2d8f311f38a4828fc44a1026481481442ed962b
+    testedVersion: 0.1.18
+    executable: playwright-cli
+  dependency-cruiser:
+    kind: cli
+    provider: dependency-cruiser
+    source: https://github.com/sverweij/dependency-cruiser
+    commit: ec603451d07d699280234808f91c4c8d3813f6e8
+    testedVersion: 18.2.0
+    executable: depcruise

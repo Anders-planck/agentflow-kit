@@ -1,0 +1,4 @@
+interface:
+  display_name: "Browser QA"
+  short_description: "Run token-efficient browser quality checks"
+  default_prompt: "Use $browser-qa to verify the important browser flows in this project."

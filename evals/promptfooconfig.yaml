@@ -1,0 +1,22 @@
+description: Orditra routing contract
+prompts:
+  - "{{request}}"
+providers:
+  - "exec: node router-provider.mjs"
+tests:
+  - vars: { request: "Find every reference to this symbol before renaming it" }
+    assert: [{ type: equals, value: serena-symbolic-code }]
+  - vars: { request: "Create an AST codemod for this repeated syntax" }
+    assert: [{ type: equals, value: structural-code-search }]
+  - vars: { request: "Check the current official API documentation" }
+    assert: [{ type: equals, value: current-docs }]
+  - vars: { request: "Map this large repository within 2000 tokens" }
+    assert: [{ type: equals, value: large-codebase-map }]
+  - vars: { request: "Verify the checkout browser flow" }
+    assert: [{ type: equals, value: browser-qa }]
+  - vars: { request: "Produce SARIF findings for this audit" }
+    assert: [{ type: equals, value: evidence-report }]
+  - vars: { request: "Review this MCP plugin and its hooks before installation" }
+    assert: [{ type: equals, value: agent-supply-chain }]
+  - vars: { request: "Help me understand the task" }
+    assert: [{ type: equals, value: workflow-router }]

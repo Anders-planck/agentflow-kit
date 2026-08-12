@@ -1,12 +1,25 @@
 import { createHash } from "node:crypto";
-import { cp, lstat, mkdir, mkdtemp, readFile, readlink, rename, rm, symlink, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { cp, lstat, mkdir, mkdtemp, readFile, readdir, readlink, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 
-import { runCommand } from "./commands.js";
+import { findExecutable, runCommand } from "./commands.js";
 import { loadSkillSources, packageVersion } from "./registry.js";
 import { resolveAppPaths, resolveLegacyAppPaths } from "./paths.js";
+import { directoryDigest } from "./planning/shared.js";
 import type { AppPaths, AppliedCommand, GlobalOptions, InstallManifest, InstallPlan, PathSnapshot, PlanItem } from "./types.js";
+
+async function assertExternalTreeSafe(path: string): Promise<void> {
+  const stat = await lstat(path);
+  if (stat.isSymbolicLink()) throw new Error(`External skill source contains a symbolic link: ${path}`);
+  if (!stat.isDirectory()) throw new Error(`External skill source is not a directory: ${path}`);
+  for (const entry of await readdir(path, { withFileTypes: true })) {
+    const child = join(path, entry.name);
+    if (entry.isSymbolicLink()) throw new Error(`External skill source contains a symbolic link: ${child}`);
+    if (entry.isDirectory()) await assertExternalTreeSafe(child);
+    else if (!entry.isFile()) throw new Error(`External skill source contains an unsupported file type: ${child}`);
+  }
+}
 
 async function snapshotPath(target: string, backupDir: string, index: number): Promise<PathSnapshot> {
   try {
@@ -120,6 +133,23 @@ async function installExternalSkills(item: Extract<PlanItem, { kind: "external-s
     runCommand({ command: "git", args: ["-C", temporary, "remote", "add", "origin", source.repository] });
     runCommand({ command: "git", args: ["-C", temporary, "fetch", "--quiet", "--depth", "1", "origin", source.commit] });
     runCommand({ command: "git", args: ["-C", temporary, "checkout", "--quiet", "FETCH_HEAD", "--", source.licensePath, ...paths] });
+    const licenseStat = await lstat(join(temporary, source.licensePath));
+    if (!licenseStat.isFile() || licenseStat.isSymbolicLink()) throw new Error(`External license is not a regular file for ${item.sourceName}`);
+    const licenseDigest = createHash("sha256").update(await readFile(join(temporary, source.licensePath))).digest("hex");
+    if (!source.licenseDigest || licenseDigest !== source.licenseDigest) throw new Error(`License digest mismatch for ${item.sourceName}`);
+    for (const path of paths) {
+      await assertExternalTreeSafe(join(temporary, path));
+      const expected = source.contentDigests?.[path];
+      const actual = await directoryDigest(join(temporary, path));
+      if (!expected) throw new Error(`Missing content digest for external skill ${item.sourceName}:${path}`);
+      if (actual !== expected) throw new Error(`Content digest mismatch for external skill ${item.sourceName}:${path}`);
+    }
+    const agentScan = findExecutable("snyk-agent-scan");
+    const uvx = findExecutable("uvx");
+    for (const path of paths) {
+      if (agentScan) runCommand({ command: agentScan, args: [join(temporary, path)] });
+      else if (uvx) runCommand({ command: uvx, args: ["snyk-agent-scan@0.5.17", join(temporary, path)] });
+    }
     await mkdir(item.target, { recursive: true });
     for (const path of paths) {
       const name = path.split("/").at(-1);
@@ -155,9 +185,12 @@ export async function applyPlan(plan: InstallPlan, options: GlobalOptions): Prom
   const snapshotTargets = new Set<string>();
   const commands: AppliedCommand[] = [];
   const ownedSymlinks: string[] = [];
+  const journalPath = join(appPaths.appStateDir, "transaction.json");
+  await atomicWrite(journalPath, `${JSON.stringify({ schemaVersion: 1, status: "applying", startedAt: new Date().toISOString(), items: actionable.map((item) => item.id) }, null, 2)}\n`);
 
   try {
-    for (const item of actionable) {
+    for (const [index, item] of actionable.entries()) {
+      await atomicWrite(journalPath, `${JSON.stringify({ schemaVersion: 1, status: "applying", index, currentItem: item.id, snapshots: snapshots.length, commands: commands.length }, null, 2)}\n`);
       const target = itemTarget(item);
       if (target && !snapshotTargets.has(target)) {
         snapshots.push(await snapshotPath(target, backupDir, snapshots.length));
@@ -190,12 +223,21 @@ export async function applyPlan(plan: InstallPlan, options: GlobalOptions): Prom
       }
     }
   } catch (error) {
+    await atomicWrite(journalPath, `${JSON.stringify({ schemaVersion: 1, status: "rolling-back", error: (error as Error).message }, null, 2)}\n`);
+    const rollbackFailures: string[] = [];
     for (const command of [...commands].reverse()) {
       if (command.inverse) {
-        try { runCommand(command.inverse); } catch { /* Best-effort command rollback. */ }
+        try { runCommand(command.inverse); } catch (rollbackError) { rollbackFailures.push((rollbackError as Error).message); }
       }
     }
-    for (const snapshot of [...snapshots].reverse()) await restoreSnapshot(snapshot);
+    for (const snapshot of [...snapshots].reverse()) {
+      try { await restoreSnapshot(snapshot); } catch (rollbackError) { rollbackFailures.push((rollbackError as Error).message); }
+    }
+    if (rollbackFailures.length) {
+      await atomicWrite(journalPath, `${JSON.stringify({ schemaVersion: 1, status: "recovery-required", originalError: (error as Error).message, rollbackFailures }, null, 2)}\n`);
+      throw new Error(`${(error as Error).message}\nRollback failures:\n${rollbackFailures.join("\n")}`);
+    }
+    await rm(journalPath, { force: true });
     throw error;
   }
 
@@ -215,6 +257,7 @@ export async function applyPlan(plan: InstallPlan, options: GlobalOptions): Prom
   const history = await loadManifests(appPaths);
   history.push({ path: backupManifestPath, manifest });
   await saveManifestPointers(appPaths, history);
+  await rm(journalPath, { force: true });
   return manifest;
 }
 
@@ -246,4 +289,47 @@ export async function uninstallAll(options: GlobalOptions): Promise<InstallManif
   await saveManifestPointers(appPaths, []);
   if (failures.length) throw new Error(`Uninstall completed with failures:\n${failures.join("\n")}`);
   return manifests;
+}
+
+export interface GarbageCollectionResult {
+  removed: string[];
+  retainedReleases: string[];
+}
+
+async function childDirectories(path: string): Promise<string[]> {
+  try { return (await readdir(path, { withFileTypes: true })).filter((entry) => entry.isDirectory()).map((entry) => join(path, entry.name)); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return []; throw error; }
+}
+
+export async function garbageCollect(options: GlobalOptions, retainReleases = 3): Promise<GarbageCollectionResult> {
+  const appPaths = resolveAppPaths(options.home);
+  const history = await loadManifests(appPaths);
+  const referencedBackups = new Set(history.map((entry) => resolve(entry.manifest.backupDir)));
+  const backupRoot = join(appPaths.appStateDir, "backups");
+  const orphanBackups = (await childDirectories(backupRoot)).filter((path) => !referencedBackups.has(resolve(path)));
+
+  const releasesRoot = join(appPaths.appDataDir, "releases");
+  const releases = (await childDirectories(releasesRoot)).sort();
+  const referencedReleases = new Set<string>();
+  for (const skillRoot of [join(appPaths.home, ".agents", "skills"), join(appPaths.home, ".claude", "skills")]) {
+    let names: string[] = [];
+    try { names = await readdir(skillRoot); } catch { /* Optional root. */ }
+    for (const name of names) {
+      const target = join(skillRoot, name);
+      try {
+        if (!(await lstat(target)).isSymbolicLink()) continue;
+        const resolvedTarget = resolve(dirname(target), await readlink(target));
+        const fromReleases = relative(resolve(releasesRoot), resolvedTarget);
+        if (fromReleases !== ".." && !fromReleases.startsWith(`..${sep}`)) {
+          const release = fromReleases.split(sep)[0];
+          if (release) referencedReleases.add(resolve(releasesRoot, release));
+        }
+      } catch { /* Ignore broken optional links. */ }
+    }
+  }
+  const keepNewest = new Set(releases.slice(-Math.max(0, retainReleases)).map((path) => resolve(path)));
+  const orphanReleases = releases.filter((path) => !referencedReleases.has(resolve(path)) && !keepNewest.has(resolve(path)));
+  const removed = [...orphanBackups, ...orphanReleases];
+  if (!options.dryRun) for (const path of removed) await rm(path, { recursive: true, force: true });
+  return { removed, retainedReleases: releases.filter((path) => !orphanReleases.includes(path)) };
 }

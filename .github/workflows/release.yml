@@ -13,36 +13,46 @@ jobs:
   pack:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - name: Verify tag matches package version
         run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
       - run: npm run check
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: false
       - name: Pack and checksum
         run: |
           npm pack
           sha256sum orditra-*.tgz > SHA256SUMS
       - name: Attest npm package
-        uses: actions/attest@v4
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           subject-path: "orditra-*.tgz"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: npm-package
           path: |
             orditra-*.tgz
             SHA256SUMS
+            sbom.spdx.json
       - name: Create GitHub pre-release
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh release create "$GITHUB_REF_NAME"
-          orditra-*.tgz SHA256SUMS
+          orditra-*.tgz SHA256SUMS sbom.spdx.json
           --repo "$GITHUB_REPOSITORY"
           --title "Orditra $GITHUB_REF_NAME"
           --generate-notes

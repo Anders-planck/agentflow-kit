@@ -2,25 +2,41 @@
 
 ## Supported versions
 
-Security fixes are applied to the latest minor release. Pre-release builds are
-for evaluation only and must be reviewed with `orditra diff` before use.
+Security fixes are provided for the latest published minor version. Older versions may receive a backport when exploitation risk is high and the fix is low risk.
 
 ## Reporting a vulnerability
 
-Do not open a public issue for credentials, path traversal, unsafe config
-merges, command injection, or destructive rollback behavior. Use GitHub's
-private vulnerability reporting for this repository.
+Do not open a public issue for a suspected vulnerability. Use GitHub private vulnerability reporting for `Anders-planck/orditra` and include:
 
-Include the affected version, operating system, client versions, a redacted
-reproduction, and whether a secret may have entered Git history. Never attach
-real auth files or unredacted diagnostic output.
+- affected version and operating system;
+- reproduction steps or a minimal proof of concept;
+- expected and observed impact;
+- whether credentials, filesystem writes, MCP tools, hooks, or generated configuration are involved.
 
-## Security boundaries
+You should receive an acknowledgement within seven days. Please allow time for triage and coordinated remediation before disclosure.
 
-- Orditra never owns client authentication files.
-- Secrets are referenced by environment-variable name, never stored as values.
-- Mutating commands support dry-run and back up every changed file.
-- Existing unmanaged files and symlinks are preserved by default; explicit
-  adoption snapshots them before replacement.
-- External skill sources are pinned to commits and checked for path traversal.
-- `doctor --json` redacts home paths and does not print configuration contents.
+## Threat model
+
+Orditra writes agent configuration, invokes client CLIs, installs skills, and can register networked MCP providers. Its primary threats are:
+
+- malicious or replaced third-party skill content;
+- mutable package/action references and compromised release inputs;
+- credential leakage through configuration, command output, or reports;
+- unexpected hooks, write-capable tools, or authenticated providers;
+- symlink/path traversal outside the intended repository or home;
+- partial mutations after interruption;
+- excessive tool exposure that expands prompt-injection and context surfaces.
+
+Controls include immutable commit and digest verification, provider risk metadata, disabled-by-default authenticated providers, managed blocks, symlink escape checks, redacted reports, transaction journals, recovery-aware rollback, pinned GitHub Actions, dependency and agent-file scanners, SBOMs, checksums, and artifact attestations.
+
+## Safe operation
+
+- Always inspect `orditra diff` or use `--dry-run` before applying a new profile.
+- Review the dependency inventory and proposed package-manager commands; dependency installation and configuration application are confirmed separately, and package-manager changes are not reverted by Orditra rollback.
+- Keep API keys and OAuth tokens in the client’s supported secret store or environment, never in this repository.
+- Review a provider’s network, authentication, write, and hook properties before changing it from `off` or `registered`.
+- Treat MCP output, fetched documentation, browser pages, and external skills as untrusted input.
+- Use `orditra doctor` after upgrades and `orditra rollback` when an application is interrupted.
+- Do not run Orditra as root or grant it broader filesystem access than the target configuration requires.
+
+The default plugin connects only to the public Context7 endpoint. Other local and authenticated providers are configured explicitly by the CLI or user profiles.

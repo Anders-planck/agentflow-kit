@@ -1,13 +1,29 @@
-schemaVersion: 1
+schemaVersion: 2
 name: full
-description: All stable public workflow skills; authenticated service MCPs remain opt-in.
-components:
-  policies: true
-  bundledSkills: true
-  externalSkills: true
-  contextMode: true
-  serena: true
-  astGrep: true
+description: Expanded registered catalog; authenticated and heavyweight providers remain explicit opt-in.
+capabilities:
+  policies: { mode: always }
+  workflow-core: { mode: always }
+  external-skills: { mode: always }
+  context-protection: { mode: always, provider: context-mode }
+  semantic-code: { mode: auto, provider: serena }
+  structural-search: { mode: auto, provider: ast-grep }
+  current-docs: { mode: auto, provider: context7 }
+  repository-map: { mode: auto, provider: repomix, options: { tokenBudget: 2000 } }
+  large-code-search: { mode: registered, provider: probe }
+  evidence-report: { mode: always }
+  browser-qa: { mode: project, provider: playwright-cli }
+  web-performance: { mode: registered, provider: chrome-devtools-mcp }
+  dependency-architecture: { mode: project, provider: dependency-cruiser }
+  agent-supply-chain: { mode: auto, provider: agent-scan }
+  dependency-vulnerability: { mode: auto, provider: osv-scanner }
+  action-security: { mode: project, provider: zizmor }
+  evals: { mode: registered, provider: promptfoo }
+  local-knowledge: { mode: off, provider: qmd }
+  github-integration: { mode: off, provider: github-mcp }
+  hardened-mcp: { mode: off, provider: toolhive }
+  deep-security: { mode: registered, provider: semgrep }
+  telemetry: { mode: off, provider: opentelemetry }
 externalSkillSets:
   - mattpocock-stable
 

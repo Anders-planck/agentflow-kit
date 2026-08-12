@@ -1,0 +1,5 @@
+schemaVersion: 2
+name: code-property-graph
+description: Explicit heavyweight code-property-graph analysis.
+capabilities:
+  code-property-graph: { mode: project, provider: joern }

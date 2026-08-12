@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Supply Chain"
+  short_description: "Audit skills, MCP servers, and hooks"
+  default_prompt: "Use $agent-supply-chain to audit this agent configuration before activation."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evidence Report"
+  short_description: "Render structured engineering evidence"
+  default_prompt: "Use $evidence-report to produce a concise evidence-backed report."

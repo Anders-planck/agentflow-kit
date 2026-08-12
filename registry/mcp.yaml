@@ -1,20 +1,56 @@
-schemaVersion: 1
+schemaVersion: 2
 servers:
   serena:
+    provider: serena
     description: Symbol-level code navigation and editing through LSP.
     transport: stdio
     startupTimeoutSeconds: 20
+    risk: medium
+    activation: auto
     clients:
-      codex:
-        context: codex
-        scope: user
-      claude:
-        context: claude-code
-        scope: user
-      opencode:
-        context: ide
-        scope: user
-    commonArgs:
-      - start-mcp-server
-      - --project-from-cwd
+      codex: { context: codex, scope: user }
+      claude: { context: claude-code, scope: user }
+      opencode: { context: ide, scope: user }
+    commonArgs: [start-mcp-server, --project-from-cwd]
+  context7:
+    provider: context7
+    description: Current version-specific library documentation.
+    transport: http
+    endpoint: https://mcp.context7.com/mcp
+    risk: medium
+    activation: auto
+    clients:
+      codex: { scope: user }
+      claude: { scope: user }
+      opencode: { scope: user }
+  probe:
+    provider: probe
+    description: Optional large-codebase AST and BM25 search.
+    transport: stdio
+    risk: medium
+    activation: registered
+    clients:
+      codex: { scope: project }
+      claude: { scope: project }
+      opencode: { scope: project }
+  chrome-devtools:
+    provider: chrome-devtools-mcp
+    description: Optional browser performance and debugging tools.
+    transport: stdio
+    risk: high
+    activation: off
+    clients:
+      codex: { scope: project }
+      claude: { scope: project }
+      opencode: { scope: project }
+  github:
+    provider: github-mcp
+    description: Explicit authenticated GitHub integration.
+    transport: stdio
+    risk: high
+    activation: off
+    clients:
+      codex: { scope: user }
+      claude: { scope: user }
+      opencode: { scope: user }
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Large Codebase Map"
+  short_description: "Map large repositories within a token budget"
+  default_prompt: "Use $large-codebase-map to map this repository within a strict token budget."

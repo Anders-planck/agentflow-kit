@@ -1,0 +1,17 @@
+schemaVersion: 2
+externalArtifacts:
+  requireFullCommit: true
+  requireContentDigest: true
+  requireLicenseDigest: true
+  quarantineBeforeActivation: true
+  requireReviewDate: true
+capabilities:
+  authenticatedDefault: off
+  highRiskDefault: off
+  remoteTelemetryDefault: off
+scanners:
+  agent: agent-scan
+  dependencies: osv-scanner
+  githubActions: zizmor
+retention:
+  releases: 3

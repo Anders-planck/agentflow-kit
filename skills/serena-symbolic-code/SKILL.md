@@ -2,13 +2,14 @@
 name: serena-symbolic-code
 description: Uses Serena MCP for symbol discovery, references, dependency understanding, and precise symbol-level edits. Use for cross-file navigation, safe refactors, semantic code changes, or when text and syntax search cannot establish symbol relationships.
 license: MIT
-compatibility: Requires the Serena MCP server and an activated project.
 metadata:
   author: orditra
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Serena Symbolic Code
+
+Requires the Serena MCP server and an activated project.
 
 ## Workflow
 
@@ -28,4 +29,3 @@ See [tool routing](references/tool-routing.md) for when Serena is not the right 
 - Avoid onboarding ephemeral repositories unless memories will be reused.
 - Do not treat zero results as proof until project activation and language support are verified.
 - Prefer the client-specific Serena context configured by Orditra.
-

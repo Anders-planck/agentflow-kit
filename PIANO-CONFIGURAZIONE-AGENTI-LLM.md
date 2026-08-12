@@ -1,5 +1,7 @@
 # Orditra — configurazione unificata e distribuibile per Codex, Claude Code e OpenCode
 
+> Stato (2026-08-12): piano implementato e consolidato nell'architettura schema-v2. Per l'uso corrente vedere `README.md`; per componenti, confini e flussi vedere `docs/architecture.md` e `docs/workflows.md`. Questo file resta come specifica storica e rationale di progetto.
+
 Data dell'analisi: 12 agosto 2026  
 Stato: implementato, applicato localmente e pubblicato
 

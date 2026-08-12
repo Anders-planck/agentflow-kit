@@ -1,0 +1,4 @@
+interface:
+  display_name: "Workflow Router"
+  short_description: "Choose the smallest safe workflow"
+  default_prompt: "Use $workflow-router to select the smallest suitable workflow and verify its prerequisites."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dependency Architecture"
+  short_description: "Map and enforce dependency boundaries"
+  default_prompt: "Use $dependency-architecture to inspect and validate module boundaries."

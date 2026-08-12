@@ -1,30 +1,45 @@
 # Public release checklist
 
-## Identity
+## Source and metadata
 
-- [x] Choose the GitHub owner/repository and replace every `OWNER` placeholder.
-- [x] Confirm the npm name and package provenance settings.
-- [x] Review LICENSE, SECURITY.md, and upstream notices.
+- [ ] Working tree contains only intended changes and `git diff --check` passes.
+- [ ] Package, plugin manifest, changelog, and release tag use the same SemVer.
+- [ ] README install examples and compatibility data match the released CLI.
+- [ ] No personal absolute paths, secrets, private endpoints, or generated memories are tracked.
+- [ ] `THIRD_PARTY_NOTICES.md` and every external license digest are current.
 
-## Safety
+## Reproducibility and security
 
-- [x] Run `npm run check`.
-- [x] Run a dedicated secret scanner over the entire Git history.
-- [x] Confirm no backup, auth, session, memory, log, or rendered home file was staged.
-- [x] Confirm fixtures use `example.com`, fake usernames, and temporary paths.
-- [x] Inspect `git log -p` before the first public push.
+- [ ] External skill sources use full immutable commits and verified per-file SHA-256 digests.
+- [ ] GitHub Actions use full commit SHAs.
+- [ ] `npm ci --ignore-scripts` and `npm audit` pass.
+- [ ] Agent Scan, OSV-Scanner, zizmor, CodeQL, and OpenSSF Scorecard checks pass or have a documented accepted finding.
+- [ ] Authenticated/high-risk providers remain disabled by default.
+- [ ] Generated files contain no credentials.
 
-## Behavior
+## Product verification
 
-- [x] Test minimal and recommended installs from clean temporary homes.
-- [x] Test merge against pre-existing Codex, Claude, and OpenCode configs.
-- [x] Verify second-run idempotence.
-- [x] Verify failure rollback and explicit uninstall.
-- [x] Run doctor on macOS and Linux.
+- [ ] `npm run check` passes.
+- [ ] `npm run coverage` completes and changed critical paths have tests.
+- [ ] `npm run eval` passes the routing eval suite.
+- [ ] Every `SKILL.md` passes `quick_validate.py` and every `agents/openai.yaml` is valid.
+- [ ] The root Codex plugin passes `validate_plugin.py`.
+- [ ] `actionlint` and `gitleaks` pass when installed.
+- [ ] Dry runs for Codex, Claude Code, and OpenCode produce only expected managed changes.
+- [ ] Dependency inventory is correct on macOS, Linux, and Windows; missing dependencies require separate consent and optional providers are excluded.
+- [ ] Schema-v1 migration, rollback, interrupted-transaction recovery, and garbage collection are exercised.
 
-## Release
+## Artifact verification
 
-- [x] Update CHANGELOG and compatibility versions.
-- [x] Tag the same commit used for the GitHub and npm artifacts.
-- [x] Verify checksums/provenance and install from the packed artifact.
-- [x] Keep the first release marked pre-release until tested by a new user.
+- [ ] `npm pack --dry-run` contains schemas, registries, skills, plugin files, notices, and no development secrets.
+- [ ] Release artifacts include the npm tarball, full source archive, `SHA256SUMS`, and SPDX SBOM.
+- [ ] GitHub artifact attestations verify against the public repository.
+- [ ] A clean temporary install prints the expected version and completes `orditra validate`.
+- [ ] npm trusted publishing succeeds without a long-lived registry token.
+
+## Publication
+
+- [ ] Create the signed or protected tag only after all checks pass.
+- [ ] Publish GitHub release and npm package from the release workflow.
+- [ ] Verify the public Codex marketplace source with `codex plugin marketplace add owner/repo --ref <tag>` and `/plugins`.
+- [ ] Start a new client session and run a smoke task using the bundled workflow router.
