@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmod, cp, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
+import { chmod, cp, lstat, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -103,6 +103,52 @@ test("content-identical unmanaged skills are safely adopted as shared symlinks",
     assert.ok((await lstat(skill)).isDirectory());
     assert.match(await readFile(join(skill, "SKILL.md"), "utf8"), /name: workflow-router/);
     await assert.rejects(lstat(join(home, ".codex", "AGENTS.md")));
+  } finally {
+    process.env.PATH = originalPath;
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("skills linked to a previous Orditra release upgrade automatically", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-release-upgrade-"));
+  const originalPath = process.env.PATH;
+  try {
+    process.env.PATH = "";
+    await mkdir(join(home, ".codex"), { recursive: true });
+    await mkdir(join(home, ".claude"), { recursive: true });
+    const options: GlobalOptions = { home, root, preset: "minimal", dryRun: false, json: false, yes: true, skipExternal: true };
+    const initial = await buildInstallPlan(options);
+    await applyPlan(initial, options);
+
+    const currentSkill = join(initial.releaseDir, "skills", "workflow-router");
+    const previousSkill = join(home, ".local", "share", "orditra", "releases", "0.0.0", "skills", "workflow-router");
+    await mkdir(join(previousSkill, ".."), { recursive: true });
+    await cp(currentSkill, previousSkill, { recursive: true });
+    for (const target of [join(home, ".agents", "skills", "workflow-router"), join(home, ".claude", "skills", "workflow-router")]) {
+      await rm(target);
+      await symlink(previousSkill, target);
+    }
+
+    const upgrade = await buildInstallPlan(options);
+    const replacements = upgrade.items.filter((item) => item.kind === "symlink" && item.source === currentSkill);
+    assert.equal(replacements.length, 2);
+    assert.ok(replacements.every((item) => item.kind === "symlink" && item.replaceExisting));
+    assert.equal(upgrade.items.filter((item) => item.kind === "notice" && item.id.endsWith("-conflict")).length, 0);
+
+    await applyPlan(upgrade, options);
+    assert.equal(await readlink(join(home, ".agents", "skills", "workflow-router")), currentSkill);
+    assert.equal(await readlink(join(home, ".claude", "skills", "workflow-router")), currentSkill);
+    assert.deepEqual((await buildInstallPlan(options)).items, []);
+
+    const externalSkill = join(home, "custom-skills", "workflow-router");
+    const agentsSkill = join(home, ".agents", "skills", "workflow-router");
+    await mkdir(join(externalSkill, ".."), { recursive: true });
+    await cp(currentSkill, externalSkill, { recursive: true });
+    await rm(agentsSkill);
+    await symlink(externalSkill, agentsSkill);
+    const protectedExternal = await buildInstallPlan(options);
+    assert.ok(protectedExternal.items.some((item) => item.kind === "notice" && item.id === "agents-skill-workflow-router-conflict"));
+    assert.ok(!protectedExternal.items.some((item) => item.kind === "symlink" && item.target === agentsSkill));
   } finally {
     process.env.PATH = originalPath;
     await rm(home, { recursive: true, force: true });

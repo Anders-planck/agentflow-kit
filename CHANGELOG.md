@@ -3,6 +3,13 @@
 All notable changes are documented here. This project follows Semantic
 Versioning.
 
+## 0.1.2 - 2026-08-12
+
+- Upgrade Orditra-managed skill symlinks when installing a newer release.
+- Preserve symlinks outside the Orditra release namespace unless adoption is
+  explicitly requested.
+- Add an integration regression test for cross-version skill upgrades.
+
 ## 0.1.1 - 2026-08-12
 
 - Publish the package from the tagged commit through npm trusted publishing.

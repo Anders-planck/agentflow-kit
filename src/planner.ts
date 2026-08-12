@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { lstat, readFile, readdir, readlink } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 import { findExecutable } from "./commands.js";
 import { parseJsonc, setJsoncValue } from "./jsonc.js";
@@ -29,12 +29,36 @@ async function directoryNames(path: string): Promise<string[]> {
   }
 }
 
-async function planSymlink(items: PlanItem[], id: string, source: string, target: string, adoptExisting = false): Promise<void> {
+function isWithin(parent: string, candidate: string): boolean {
+  const pathFromParent = relative(parent, candidate);
+  return pathFromParent === "" || (pathFromParent !== ".." && !pathFromParent.startsWith(`..${sep}`) && !isAbsolute(pathFromParent));
+}
+
+async function planSymlink(
+  items: PlanItem[],
+  id: string,
+  source: string,
+  target: string,
+  managedReleasesDir: string,
+  adoptExisting = false,
+): Promise<void> {
   try {
     const stat = await lstat(target);
     if (stat.isSymbolicLink()) {
       const current = await readlink(target);
-      if (current === source) return;
+      const resolvedCurrent = resolve(dirname(target), current);
+      if (resolvedCurrent === resolve(source)) return;
+      if (isWithin(resolve(managedReleasesDir), resolvedCurrent)) {
+        items.push({
+          kind: "symlink",
+          id,
+          description: `Upgrade Orditra-managed skill ${target}`,
+          source,
+          target,
+          replaceExisting: true,
+        });
+        return;
+      }
     }
     if (stat.isDirectory() && await directoryDigest(source) === await directoryDigest(target)) {
       items.push({
@@ -144,7 +168,8 @@ export async function buildInstallPlan(options: GlobalOptions): Promise<InstallP
       }
     : detectedClients;
   const items: PlanItem[] = [];
-  const releaseDir = join(appPaths.appDataDir, "releases", version);
+  const managedReleasesDir = join(appPaths.appDataDir, "releases");
+  const releaseDir = join(managedReleasesDir, version);
   const releaseSkills = join(releaseDir, "skills");
   const bundledSkillNames = preset.components.bundledSkills ? await directoryNames(join(root, "skills")) : [];
   for (const name of bundledSkillNames) {
@@ -200,10 +225,10 @@ export async function buildInstallPlan(options: GlobalOptions): Promise<InstallP
   for (const name of skillNames) {
     const source = join(releaseSkills, name);
     if (clients.codex || clients.opencode) {
-      await planSymlink(items, `agents-skill-${name}`, source, join(appPaths.home, ".agents", "skills", name), options.adoptExisting);
+      await planSymlink(items, `agents-skill-${name}`, source, join(appPaths.home, ".agents", "skills", name), managedReleasesDir, options.adoptExisting);
     }
     if (clients.claude) {
-      await planSymlink(items, `claude-skill-${name}`, source, join(appPaths.home, ".claude", "skills", name), options.adoptExisting);
+      await planSymlink(items, `claude-skill-${name}`, source, join(appPaths.home, ".claude", "skills", name), managedReleasesDir, options.adoptExisting);
     }
   }
 
