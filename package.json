@@ -1,6 +1,6 @@
 {
   "name": "orditra",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "One reversible configuration fabric for Codex, Claude Code, and OpenCode.",
   "type": "module",
   "bin": {
@@ -50,7 +50,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Anders-planck/orditra.git"
+    "url": "git+https://github.com/Anders-planck/orditra.git"
   },
   "publishConfig": {
     "access": "public",
