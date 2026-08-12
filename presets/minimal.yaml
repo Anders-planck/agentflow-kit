@@ -1,0 +1,11 @@
+schemaVersion: 1
+name: minimal
+description: Portable policies and Agentflow-authored skills only.
+components:
+  policies: true
+  bundledSkills: true
+  externalSkills: false
+  contextMode: false
+  serena: false
+  astGrep: false
+

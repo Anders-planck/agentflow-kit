@@ -1,0 +1,66 @@
+schemaVersion: 1
+stages:
+  setup:
+    description: Establish project tracker, labels, domain docs, and agent guidance.
+    routes:
+      - skill: project-bootstrap
+        source: agentflow
+        triggers: [new project, initialize agent config, configure repository]
+      - skill: setup-matt-pocock-skills
+        source: mattpocock
+        requiresMissing: docs/agents
+  discovery:
+    description: Resolve unclear goals and understand unfamiliar systems.
+    routes:
+      - skill: workflow-router
+        source: agentflow
+      - skill: ask-matt
+        source: mattpocock
+      - skill: grill-me
+        source: mattpocock
+      - skill: prototype
+        source: mattpocock
+  planning:
+    description: Turn decisions into a spec and independently grabbable work.
+    routes:
+      - skill: to-spec
+        aliases: [to-prd]
+        source: mattpocock
+      - skill: to-tickets
+        aliases: [to-issues]
+        source: mattpocock
+      - skill: triage
+        source: mattpocock
+  implementation:
+    description: Build vertical slices with suitable tests and bounded scope.
+    routes:
+      - skill: implement
+        source: mattpocock
+      - skill: tdd
+        source: mattpocock
+      - skill: serena-symbolic-code
+        source: agentflow
+      - skill: structural-code-search
+        source: agentflow
+  diagnosis:
+    description: Reproduce, minimize, instrument, fix, and regression-test bugs.
+    routes:
+      - skill: diagnosing-bugs
+        aliases: [diagnose]
+        source: mattpocock
+  architecture:
+    description: Improve module depth, boundaries, and navigability.
+    routes:
+      - skill: improve-codebase-architecture
+        source: mattpocock
+  verification:
+    description: Review behavior, standards, tests, and produced artifacts.
+    routes:
+      - skill: code-review
+        source: mattpocock
+  handoff:
+    description: Preserve decisions, state, and next actions across people or sessions.
+    routes:
+      - skill: handoff
+        source: mattpocock
+

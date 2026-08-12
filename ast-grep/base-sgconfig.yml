@@ -1,0 +1,6 @@
+ruleDirs:
+  - rules
+testConfigs:
+  - testRuleDirs:
+      - rule-tests
+

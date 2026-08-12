@@ -1,0 +1,13 @@
+schemaVersion: 1
+name: recommended
+description: The tested engineering flow with context protection and semantic tools.
+components:
+  policies: true
+  bundledSkills: true
+  externalSkills: true
+  contextMode: true
+  serena: true
+  astGrep: true
+externalSkillSets:
+  - mattpocock-core
+

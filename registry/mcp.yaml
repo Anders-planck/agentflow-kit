@@ -1,0 +1,20 @@
+schemaVersion: 1
+servers:
+  serena:
+    description: Symbol-level code navigation and editing through LSP.
+    transport: stdio
+    startupTimeoutSeconds: 20
+    clients:
+      codex:
+        context: codex
+        scope: user
+      claude:
+        context: claude-code
+        scope: user
+      opencode:
+        context: ide
+        scope: user
+    commonArgs:
+      - start-mcp-server
+      - --project-from-cwd
+

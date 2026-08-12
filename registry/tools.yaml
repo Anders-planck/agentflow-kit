@@ -1,0 +1,23 @@
+schemaVersion: 1
+tools:
+  context-mode:
+    kind: plugin
+    source: https://github.com/mksglu/context-mode
+    commit: 7ee0f2982f59e213d5c5b88ca60fcb3053d60f5f
+    testedVersion: 1.0.169
+    requires:
+      node: ">=22.5"
+  serena:
+    kind: mcp
+    source: https://github.com/oraios/serena
+    commit: f1d78a88cec2031d6b699c9944839979e9a0175d
+    testedVersion: 1.5.3
+    executable: serena
+    fallbackExecutable: uvx
+  ast-grep:
+    kind: cli
+    source: https://github.com/ast-grep/ast-grep
+    commit: 5aa00e1dd5e0077589a6c0c23c640e39947403ec
+    testedVersion: 0.43.0
+    executables: [sg, ast-grep]
+

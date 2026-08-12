@@ -1,0 +1,13 @@
+schemaVersion: 1
+name: full
+description: All stable public workflow skills; authenticated service MCPs remain opt-in.
+components:
+  policies: true
+  bundledSkills: true
+  externalSkills: true
+  contextMode: true
+  serena: true
+  astGrep: true
+externalSkillSets:
+  - mattpocock-stable
+

@@ -1,0 +1,25 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+*.tmp
+*.bak
+.env
+.env.*
+!.env.example
+
+# Never publish local state, credentials, backups, or rendered home configs.
+local-state/
+.agentflow-state/
+.serena/
+config.local.yaml
+auth.json
+**/auth.json
+**/credentials.json
+**/sessions/
+**/memories/
+**/backups/
+
+# Test artifacts.
+coverage/
+.test-home/
