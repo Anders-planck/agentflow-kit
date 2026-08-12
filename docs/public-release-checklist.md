@@ -25,6 +25,6 @@
 ## Release
 
 - [x] Update CHANGELOG and compatibility versions.
-- [ ] Tag the same commit used for the GitHub and npm artifacts.
+- [x] Tag the same commit used for the GitHub and npm artifacts.
 - [x] Verify checksums/provenance and install from the packed artifact.
 - [x] Keep the first release marked pre-release until tested by a new user.
