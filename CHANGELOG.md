@@ -3,6 +3,12 @@
 All notable changes are documented here. This project follows Semantic
 Versioning.
 
+## 0.1.1 - 2026-08-12
+
+- Publish the package from the tagged commit through npm trusted publishing.
+- Normalize npm repository metadata and document the live registry install path.
+- Complete checksum, attestation, clean-install, and public pre-release checks.
+
 ## 0.1.0 - 2026-08-12
 
 - Adopt the original public name Orditra, with automatic migration from the
