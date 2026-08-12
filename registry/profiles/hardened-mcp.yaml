@@ -1,0 +1,5 @@
+schemaVersion: 2
+name: hardened-mcp
+description: Explicit isolated MCP execution and audit controls.
+capabilities:
+  hardened-mcp: { mode: project, provider: toolhive }

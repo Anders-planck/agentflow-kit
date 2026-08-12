@@ -1,0 +1,17 @@
+schemaVersion: 2
+clients:
+  codex:
+    globalSkills: ~/.agents/skills
+    projectSkills: .agents/skills
+    mcp: true
+    plugins: [desktop, cli]
+  claude:
+    globalSkills: ~/.claude/skills
+    projectSkills: .agents/skills
+    mcp: true
+    plugins: [cli]
+  opencode:
+    globalSkills: ~/.config/opencode/skills
+    projectSkills: .agents/skills
+    mcp: true
+    plugins: [cli]

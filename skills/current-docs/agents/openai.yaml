@@ -1,0 +1,11 @@
+interface:
+  display_name: "Current Docs"
+  short_description: "Route dependency questions to current docs"
+  default_prompt: "Use $current-docs to verify the current official documentation for this dependency."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "context7"
+      description: "Current version-specific library documentation"
+      transport: "streamable_http"
+      url: "https://mcp.context7.com/mcp"

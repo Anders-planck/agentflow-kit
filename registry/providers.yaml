@@ -1,0 +1,319 @@
+schemaVersion: 2
+providers:
+  orditra-policy:
+    description: Native managed policy blocks.
+    kind: builtin
+    source: orditra
+    clients: [codex, claude, opencode]
+    risk: low
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  orditra-skills:
+    description: Native bundled skills with repo-local or shared activation.
+    kind: builtin
+    source: orditra
+    clients: [codex, claude, opencode]
+    risk: low
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  orditra-skill-lock:
+    description: Immutable external skill fetch and quarantine pipeline.
+    kind: builtin
+    source: orditra
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: true
+    authenticated: false
+    writes: true
+    hooks: false
+  orditra-reporting:
+    description: Native structured findings and report renderers.
+    kind: builtin
+    source: orditra
+    clients: [codex, claude, opencode]
+    risk: low
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  context-mode:
+    description: Context-protection plugin and hooks.
+    kind: plugin
+    source: https://github.com/mksglu/context-mode
+    version: 1.0.169
+    commit: 7ee0f2982f59e213d5c5b88ca60fcb3053d60f5f
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: false
+    authenticated: false
+    writes: true
+    hooks: true
+  serena:
+    description: LSP-backed semantic code MCP.
+    kind: mcp
+    source: https://github.com/oraios/serena
+    version: 1.5.3
+    commit: f1d78a88cec2031d6b699c9944839979e9a0175d
+    executable: serena
+    transport: stdio
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  ast-grep:
+    description: Structural code CLI.
+    kind: cli
+    source: https://github.com/ast-grep/ast-grep
+    version: 0.43.0
+    commit: 5aa00e1dd5e0077589a6c0c23c640e39947403ec
+    executable: sg
+    clients: [codex, claude, opencode]
+    risk: low
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  context7:
+    description: Current library documentation over streamable HTTP MCP.
+    kind: mcp
+    source: https://github.com/upstash/context7
+    version: 4.0.2
+    commit: ca15df0443ee770506fc4eb270d1efc71d483933
+    transport: http
+    endpoint: https://mcp.context7.com/mcp
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: true
+    authenticated: false
+    writes: false
+    hooks: false
+  repomix:
+    description: Tree-sitter compressed repository maps and token counts.
+    kind: cli
+    source: https://github.com/yamadashy/repomix
+    version: 1.18.0
+    commit: e3b15a406ed78d8a463620a032a059ce911bfc0e
+    executable: repomix
+    clients: [codex, claude, opencode]
+    risk: low
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  probe:
+    description: AST/BM25 and optional LSP code search.
+    kind: mcp
+    source: https://github.com/probelabs/probe
+    commit: e34a3d4277a45acd2bd1463619bfb95ec067cc66
+    executable: probe
+    transport: stdio
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: false
+    authenticated: false
+    writes: false
+    hooks: false
+  playwright-cli:
+    description: Token-efficient browser automation CLI and skills.
+    kind: cli
+    source: https://github.com/microsoft/playwright-cli
+    version: 0.1.18
+    commit: e2d8f311f38a4828fc44a1026481481442ed962b
+    executable: playwright-cli
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: true
+    authenticated: false
+    writes: true
+    hooks: false
+  chrome-devtools-mcp:
+    description: Chrome performance and debugging MCP.
+    kind: mcp
+    source: https://github.com/ChromeDevTools/chrome-devtools-mcp
+    version: 1.7.0
+    commit: b58c613f4b05ade36bbf0d6ba44d5a525ec4d19a
+    executable: chrome-devtools-mcp
+    transport: stdio
+    clients: [codex, claude, opencode]
+    risk: high
+    network: true
+    authenticated: false
+    writes: false
+    hooks: false
+  dependency-cruiser:
+    description: JavaScript and TypeScript dependency-boundary analysis.
+    kind: cli
+    source: https://github.com/sverweij/dependency-cruiser
+    version: 18.2.0
+    commit: ec603451d07d699280234808f91c4c8d3813f6e8
+    executable: depcruise
+    clients: [codex, claude, opencode]
+    risk: low
+    network: false
+    authenticated: false
+    writes: false
+    hooks: false
+  agent-scan:
+    description: Security scanner for agent, MCP, prompt, and skill supply chains.
+    kind: cli
+    source: https://github.com/snyk/agent-scan
+    version: 0.5.17
+    commit: ea959964ce4728426fca9fa78c9e7809b972f313
+    executable: snyk-agent-scan
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: true
+    authenticated: false
+    writes: false
+    hooks: false
+  osv-scanner:
+    description: Multi-ecosystem dependency vulnerability scanner.
+    kind: cli
+    source: https://github.com/google/osv-scanner
+    version: 2.5.0
+    commit: 0af25542cef1b8980cdad15d8bddc3d953cb2de2
+    executable: osv-scanner
+    clients: [codex, claude, opencode]
+    risk: low
+    network: true
+    authenticated: false
+    writes: false
+    hooks: false
+  zizmor:
+    description: Static analysis for GitHub Actions.
+    kind: cli
+    source: https://github.com/zizmorcore/zizmor
+    commit: b4393f9e92dcff49337fdba0a491e20640073a60
+    executable: zizmor
+    clients: [codex, claude, opencode]
+    risk: low
+    network: false
+    authenticated: false
+    writes: false
+    hooks: false
+  promptfoo:
+    description: Cross-model skill and agent behavior evaluation.
+    kind: cli
+    source: https://github.com/promptfoo/promptfoo
+    version: 0.122.0
+    commit: be44f8389bcd234e7144861957f670548ce85326
+    executable: promptfoo
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: true
+    authenticated: false
+    writes: true
+    hooks: false
+  github-mcp:
+    description: Official authenticated GitHub MCP server.
+    kind: mcp
+    source: https://github.com/github/github-mcp-server
+    commit: d6cab9757ac577eecf1821ff167895a76b342beb
+    transport: stdio
+    clients: [codex, claude, opencode]
+    risk: high
+    network: true
+    authenticated: true
+    writes: true
+    hooks: false
+  qmd:
+    description: Local Markdown knowledge search.
+    kind: cli
+    source: https://github.com/tobi/qmd
+    commit: e428df76bc0274d9e93eb7ca3e95673315c42e90
+    executable: qmd
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  toolhive:
+    description: Isolated MCP runtime, registry, and policy layer.
+    kind: cli
+    source: https://github.com/stacklok/toolhive
+    commit: 52ad2932e0b41f2ad7cb37ac50abddd3556252c7
+    executable: thv
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: true
+    authenticated: false
+    writes: true
+    hooks: false
+  semgrep:
+    description: Optional deep static security analysis.
+    kind: cli
+    source: https://github.com/semgrep/semgrep
+    commit: 4fadea628509108b6b8b621236779f37bf52a08e
+    executable: semgrep
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: false
+    authenticated: false
+    writes: false
+    hooks: false
+  trivy:
+    description: Optional container, filesystem, and IaC security scanner.
+    kind: cli
+    source: https://github.com/aquasecurity/trivy
+    commit: 333ec8083978d31a7dfc3d20a628290a2fdb2187
+    executable: trivy
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: true
+    authenticated: false
+    writes: false
+    hooks: false
+  joern:
+    description: Optional code-property-graph analysis engine.
+    kind: cli
+    source: https://github.com/joernio/joern
+    commit: 7a5118cf23ffcb0a62bc72542e41cfff9137962d
+    executable: joern
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  d2:
+    description: Optional polished diagram renderer.
+    kind: cli
+    source: https://github.com/terrastruct/d2
+    commit: a0cb0de49cede832499a27d8619c63b26fc35729
+    executable: d2
+    clients: [codex, claude, opencode]
+    risk: low
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  scip:
+    description: Optional persistent symbol graph interchange.
+    kind: cli
+    source: https://github.com/scip-code/scip
+    commit: 6407d1fbfe118c67a897c6969cb84d820dfaff5e
+    executable: scip
+    clients: [codex, claude, opencode]
+    risk: medium
+    network: false
+    authenticated: false
+    writes: true
+    hooks: false
+  opentelemetry:
+    description: Explicit opt-in telemetry export.
+    kind: hook
+    source: https://github.com/open-telemetry/opentelemetry-js
+    commit: 96fc1622453047a1cb4173786a2eddfad595adb0
+    clients: [codex, claude, opencode]
+    risk: high
+    network: true
+    authenticated: false
+    writes: true
+    hooks: true

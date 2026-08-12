@@ -1,154 +1,166 @@
 # Orditra
 
-Orditra is a public, reversible configuration toolkit for Codex, Claude
-Code, and OpenCode. It combines workflow-aware Agent Skills with context-mode,
-Serena, and ast-grep without copying entire client home directories or storing
-credentials.
+Orditra is a public, versionable capability fabric for Codex, Claude Code, and OpenCode. It keeps one source of truth for agent policies, skills, MCP providers, CLI tools, project profiles, security rules, and evidence reports, then renders only the configuration each client needs.
 
-The name **Orditra** is coined from the Italian *ordito* (the warp that holds a
-fabric together) and orchestration: one durable configuration fabric across
-different coding agents.
-
-> Status: `0.1.2` public pre-release. GitHub artifacts include a SHA-256
-> checksum and build attestation; npm releases use trusted publishing with OIDC.
+Its defaults are deliberately small: capabilities are available without forcing every MCP server into every session. Configuration is reversible, external skill sources are commit- and digest-pinned, and project-specific tooling stays with the project.
 
 ## What it manages
 
-- A shared Agent Skills tree for Codex/OpenCode and Claude-compatible links.
-- Workflow routing from project setup through planning, implementation,
-  diagnosis, verification, and handoff.
-- context-mode through each client's official plugin mechanism.
-- Serena through official Codex/Claude MCP commands and OpenCode JSONC config.
-- Client-specific guidance through bounded managed blocks.
-- Backups, idempotent updates, doctor output, and rollback.
+- shared policies and compact workflow-routing skills;
+- context-mode for large-output protection;
+- Serena for symbol navigation and controlled semantic edits;
+- ast-grep for syntax-aware search and rewrites;
+- Context7 for current version-specific documentation;
+- Matt Pocock's workflow skills, pinned and verified before installation;
+- optional repository maps, browser QA, performance, architecture, security, local knowledge, evaluation, observability, and visual-report providers;
+- terminal, JSON, Markdown, SARIF, and self-contained HTML reports.
 
-Orditra never owns client authentication files, session history, Serena
-memories, or context-mode indexes.
+Orditra distinguishes four lifecycle decisions:
 
-## Build from source
+| Mode | Meaning |
+| --- | --- |
+| `off` | unavailable and not configured |
+| `registered` | known to Orditra and discoverable, but not activated |
+| `project` | kept out of global configuration and exposed through project workflows |
+| `auto` / `always` | activated by the selected preset, profile, or explicit override |
 
-Requirements: Node.js 22.5+, Git, and at least one supported client.
+## Install
+
+Requires Node.js 22 or later. Start with a dry run:
 
 ```bash
-npm install
-npm test
-node dist/src/cli.js diff --preset recommended
-node dist/src/cli.js install --preset recommended --yes
-node dist/src/cli.js doctor
+npm install --global orditra
+orditra install --preset recommended --dry-run
+orditra install --preset recommended --yes
+orditra doctor
 ```
 
-Or run the public GitHub package directly:
+At installation time Orditra inventories the executables required by the active preset. Missing dependencies are shown with their pinned version/source and proposed package-manager command, then require a separate confirmation before configuration is applied. `--dry-run` only previews them; `--yes` approves safe required dependency installers; `--skip-dependencies` leaves them untouched and reports the resulting missing capability. Package-manager changes are external to Orditra and are not removed by `orditra rollback` or `uninstall`. Optional, project-only, authenticated, and high-risk providers are never mass-installed by the global installer.
+
+To test the Codex plugin directly from GitHub:
 
 ```bash
-npx --yes github:Anders-planck/orditra install --preset recommended
-npx --yes github:Anders-planck/orditra doctor
+codex plugin marketplace add Anders-planck/orditra --ref main
+codex
+/plugins
 ```
 
-Install the public npm package with:
+Install or enable Orditra in the plugin browser, then start a new Codex session. The repository also works as a local marketplace and as a standalone `.codex-plugin` bundle.
+
+To work from source:
 
 ```bash
-npx orditra@latest install --preset recommended
-npx orditra@latest doctor
+git clone https://github.com/Anders-planck/orditra.git
+cd orditra
+npm ci
+npm run check
+npm link
 ```
 
 ## Presets
 
-| Preset | Includes |
-|---|---|
-| `minimal` | Shared policy and Orditra-authored portable skills |
-| `recommended` | Minimal + context-mode + Serena + ast-grep checks + curated Matt Pocock flow |
-| `full` | Recommended + all stable public Matt Pocock workflow skills |
+| Preset | Intended use |
+| --- | --- |
+| `minimal` | local-only policy and workflow layer; networked providers remain registered or off |
+| `recommended` | context protection, semantic and structural code work, current docs, evidence, and supply-chain checks |
+| `full` | all broadly useful profiles registered, while authenticated and high-risk providers remain opt-in |
 
-Authenticated service MCPs are never enabled by `full`; they remain explicit
-opt-ins.
+Preview any change before applying it:
+
+```bash
+orditra diff --preset recommended
+orditra install --preset recommended --dry-run
+```
+
+## Configuration
+
+The portable user configuration lives at `~/.config/orditra/config.yaml` on macOS/Linux or the corresponding XDG directory. Set `ORDITRA_CONFIG_HOME`, `XDG_CONFIG_HOME`, `XDG_STATE_HOME`, or `ORDITRA_PORTABLE_HOME` to relocate it without editing committed files.
+
+```yaml
+schemaVersion: 2
+preset: recommended
+clients: [codex, claude, opencode]
+profiles:
+  - web
+capabilities:
+  repository-map:
+    mode: registered
+  browser-qa:
+    mode: project
+  github-integration:
+    mode: off
+```
+
+Configuration precedence is deterministic:
+
+1. capability registry defaults;
+2. selected preset;
+3. profiles, in listed order;
+4. user capability overrides;
+5. legacy component flags during schema-v1 compatibility.
+
+Inspect the result and its provenance:
+
+```bash
+orditra config explain
+orditra config explain --format json
+orditra skills explain workflow-router
+orditra config migrate --dry-run
+orditra config migrate --yes
+```
+
+## Project-aware setup
+
+`project sync` detects repository signals, writes a portable marker, and copies only relevant skills into `.agents/skills`. Existing divergent project skills are preserved.
+
+```bash
+orditra project diff --dir /path/to/project
+orditra project sync --dir /path/to/project --dry-run
+orditra project sync --dir /path/to/project --yes
+```
+
+Detected profiles include web development, web performance, large codebases, JavaScript architecture, GitHub Actions, security, evaluations, local knowledge, hardened MCP execution, container security, code-property graphs, multi-repository symbols, telemetry, and visual export.
 
 ## Commands
 
 ```text
-orditra install       Preview, confirm, back up, and apply a preset
-orditra diff          Show the install plan without writing
-orditra init          Create user-level Orditra preferences
-orditra doctor        Check clients, integrations, binaries, and skill drift
-orditra update        Reconcile the current release and preset
-orditra rollback      Restore the latest pre-install snapshot
-orditra uninstall     Preview removal; add --yes to unwind all changesets
-orditra project init  Add a non-destructive project marker
-orditra validate      Validate registries, skills, and public safety
+orditra install|update|diff
+orditra doctor|report|map
+orditra project init|diff|sync
+orditra config explain|migrate
+orditra skills explain <name>
+orditra rollback|uninstall|gc
+orditra validate|version
 ```
 
-All mutating workflows support `--dry-run`; automation can use `--yes --json`.
-Use `--home <temporary-directory>` to test without touching the real home.
-Conflicting skill directories are preserved by default. Use `--adopt-existing`
-to back them up and replace them with links to the managed release. `uninstall`
-unwinds the complete changeset history, including updates and adoptions.
+All diagnostic commands support `--format terminal|json|markdown|sarif|html` and `--output <file>`. `orditra map` also accepts `--budget <tokens>` and reports what was selected instead of silently overflowing the context window.
 
-## One-file configuration
+## Safety and reproducibility
 
-Run `orditra init`, then manage every client from
-`~/.config/orditra/config.yaml`:
+- Managed blocks preserve unrelated client configuration.
+- Every mutation is planned first and recorded in a transaction journal.
+- Interrupted runs are recoverable; rollback failures remain visible instead of being hidden.
+- External skills require an immutable commit, license digest, review date, and per-file content digests.
+- Provider metadata declares network, authentication, write, hook, and risk properties.
+- GitHub Actions are pinned to full commit SHAs; releases include checksums, provenance attestations, and an SPDX SBOM.
+- Reports redact common secret-bearing arguments and HTML output has no remote assets.
 
-```yaml
-schemaVersion: 1
-preset: recommended
-clients: auto # or [codex, claude, opencode]
-components:
-  serena: true
-  astGrep: true
-```
+Do not commit API keys, OAuth tokens, private MCP URLs, Serena memories, or machine-specific paths. Authenticated providers such as GitHub are registered but disabled until the user configures them deliberately.
 
-`orditra update --yes` reconciles Codex, Claude Code, and OpenCode from that
-single source of truth. The command line `--preset` wins over the file. Optional
-machine-only overrides belong in `config.local.yaml`; keep the main file in a
-dotfiles repository or symlink it from one. Orditra validates both layers and
-never reads credentials from them.
-
-This repository ships a safe public default at `config/config.yaml`. Clone
-owners can make it their live, versioned configuration with:
+## Development
 
 ```bash
-mkdir -p ~/.config/orditra
-mv ~/.config/orditra/config.yaml ~/.config/orditra/config.backup.yaml
-ln -s "$PWD/config/config.yaml" ~/.config/orditra/config.yaml
-```
-
-### Upgrade from the provisional name
-
-Early `0.1.0` checkouts used the provisional name `agentflow-kit`. Orditra reads
-that configuration and manifest history automatically, then makes its own XDG
-paths canonical on the first successful update. Existing backups remain part
-of the uninstall chain.
-
-## Workflow integration
-
-Skills are not a detached command catalog. `registry/workflows.yaml` maps the
-engineering lifecycle to Orditra and pinned upstream skills. Only metadata is
-available before routing; full skill instructions and references load on
-demand.
-
-- context-mode protects large output and session continuity.
-- Serena handles semantic symbols and references.
-- ast-grep handles syntactic patterns and controlled rewrites.
-- `rg` remains the correct tool for text, filenames, logs, and config strings.
-
-See [workflow design](docs/workflows.md) and [architecture](docs/architecture.md).
-
-## Public-repository safety
-
-Run this before every release:
-
-```bash
+npm ci
+npm test
+npm run coverage
+npm run validate
+npm run eval
 npm run check
+npm pack --dry-run
 ```
 
-The validator rejects personal macOS home paths, unsafe external-skill paths,
-invalid skill metadata, unknown workflow routes, and common secret patterns.
-GitHub CI adds a dedicated secret scan. Review the
-[release checklist](docs/public-release-checklist.md) before creating the
-remote or publishing npm.
+Architecture and extension rules are documented in [docs/architecture.md](docs/architecture.md), [docs/workflows.md](docs/workflows.md), and [CONTRIBUTING.md](CONTRIBUTING.md). The ecosystem decisions and optional integrations are recorded in [docs/ecosystem-audit.md](docs/ecosystem-audit.md).
 
-## License and upstream work
+## License
 
-Orditra-authored code and skills use the MIT License. Matt Pocock's skills
-are fetched from a pinned commit under their MIT License; Orditra preserves
-the upstream license and does not install both plugin and copied forms.
-context-mode, Serena, and ast-grep remain separate upstream integrations.
+MIT. Third-party provenance is listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

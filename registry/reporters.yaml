@@ -1,0 +1,22 @@
+schemaVersion: 2
+reporters:
+  terminal:
+    extension: txt
+    machineReadable: false
+    selfContained: true
+  json:
+    extension: json
+    machineReadable: true
+    selfContained: true
+  markdown:
+    extension: md
+    machineReadable: false
+    selfContained: true
+  sarif:
+    extension: sarif
+    machineReadable: true
+    selfContained: true
+  html:
+    extension: html
+    machineReadable: false
+    selfContained: true

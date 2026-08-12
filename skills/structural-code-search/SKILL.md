@@ -2,13 +2,14 @@
 name: structural-code-search
 description: Uses ast-grep for AST-aware code search, lint rules, and controlled rewrites while keeping text search and semantic navigation separate. Use for syntactic patterns, codemods, repeated code shapes, or structural rules that regex cannot safely express.
 license: MIT
-compatibility: Requires sg or ast-grep; project scans require sgconfig.yml.
 metadata:
   author: orditra
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Structural Code Search
+
+Requires `sg` or `ast-grep`; project scans require `sgconfig.yml`.
 
 ## Workflow
 
@@ -29,4 +30,3 @@ See [patterns and safety](references/patterns.md) for examples.
 - Never assume formatting-insensitive matching means semantic equivalence.
 - Do not run a repository-wide rewrite before validating positive and negative cases.
 - Keep project-specific rules in the project, not in a global catch-all config.
-

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Serena Symbolic Code"
+  short_description: "Navigate and edit code by symbol"
+  default_prompt: "Use $serena-symbolic-code for semantic navigation, references, and precise symbol-level edits."

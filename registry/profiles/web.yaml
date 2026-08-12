@@ -1,0 +1,7 @@
+schemaVersion: 2
+name: web
+description: Browser QA for detected web applications.
+detects: [web]
+capabilities:
+  browser-qa: { mode: project, provider: playwright-cli }
+skills: [browser-qa]

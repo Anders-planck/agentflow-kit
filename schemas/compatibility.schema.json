@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "clients"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "clients": {
+      "type": "object",
+      "required": ["codex", "claude", "opencode"],
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["globalSkills", "projectSkills", "mcp", "plugins"],
+        "properties": {
+          "globalSkills": { "type": "string" },
+          "projectSkills": { "type": "string" },
+          "mcp": { "type": "boolean" },
+          "plugins": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+        }
+      }
+    }
+  }
+}

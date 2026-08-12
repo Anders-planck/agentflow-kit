@@ -1,0 +1,6 @@
+schemaVersion: 2
+name: local-knowledge
+description: Explicit local Markdown corpus indexing.
+detects: [large-docs]
+capabilities:
+  local-knowledge: { mode: project, provider: qmd }

@@ -1,0 +1,8 @@
+schemaVersion: 2
+name: large-codebase
+description: Token-budgeted repository maps with optional high-scale search.
+detects: [large-repository]
+capabilities:
+  repository-map: { mode: project, provider: repomix, options: { tokenBudget: 2000 } }
+  large-code-search: { mode: registered, provider: probe }
+skills: [large-codebase-map]

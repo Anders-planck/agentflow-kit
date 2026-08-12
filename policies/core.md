@@ -7,10 +7,19 @@ Use context-mode for large or uncertain output, Serena for semantic symbol and
 reference work, ast-grep for syntactic structures and rewrites, and ripgrep for
 plain text, filenames, logs, and configuration strings.
 
+Treat registered tools as available, not automatically active. Keep project
+providers inside project workflows and activate authenticated, write-capable,
+hook-bearing, or high-risk providers only for an explicit need. When library or
+client behavior may have changed, verify current official documentation before
+acting.
+
 Do not expose secrets, credentials, auth files, private endpoints, or session
 state. Preview broad or destructive changes, preserve unrelated user edits,
 and verify every mutation proportionally to risk.
 
+Before declaring completion, use the verification gate and report the evidence
+as stable findings. Prefer bounded summaries or file artifacts over pasting
+large logs into the conversation.
+
 On a new repository, check project setup before invoking workflow skills that
 depend on an issue tracker, triage labels, CONTEXT.md, or ADR locations.
-

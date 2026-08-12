@@ -1,0 +1,7 @@
+schemaVersion: 2
+name: web-performance
+description: Explicit Chrome performance tracing and diagnostics.
+detects: [web]
+capabilities:
+  web-performance: { mode: project, provider: chrome-devtools-mcp }
+skills: [performance-report]

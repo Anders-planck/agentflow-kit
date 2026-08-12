@@ -1,0 +1,5 @@
+schemaVersion: 2
+name: evals
+description: Maintainer behavioral tests for skills and routing.
+capabilities:
+  evals: { mode: project, provider: promptfoo }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Performance Report"
+  short_description: "Capture and report web performance evidence"
+  default_prompt: "Use $performance-report to produce an evidence-backed web performance report."

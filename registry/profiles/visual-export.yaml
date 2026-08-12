@@ -1,0 +1,6 @@
+schemaVersion: 2
+name: visual-export
+description: Optional polished D2 diagram export.
+capabilities:
+  visual-export: { mode: project, provider: d2 }
+skills: [evidence-report]

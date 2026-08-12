@@ -1,0 +1,87 @@
+schemaVersion: 1
+dependencies:
+  git:
+    description: Immutable external skill checkout and source verification.
+    source: https://git-scm.com/
+    requiredBy: [external-skills]
+    satisfiedBy: [git]
+    installers:
+      - platforms: [darwin, linux]
+        requires: brew
+        command: brew
+        args: [install, git]
+      - platforms: [win32]
+        requires: winget
+        command: winget
+        args: [install, --id, Git.Git, --exact, --accept-source-agreements, --accept-package-agreements]
+  uv:
+    description: Pinned Serena runtime through uvx when a standalone Serena executable is unavailable.
+    source: https://github.com/astral-sh/uv
+    version: 0.12.3
+    commit: c2681564218e41a73e99cc448ba0b25459920444
+    requiredBy: [semantic-code]
+    satisfiedBy: [serena, uvx]
+    installers:
+      - platforms: [darwin, linux]
+        requires: brew
+        command: brew
+        args: [install, uv]
+      - platforms: [darwin, linux, win32]
+        requires: pipx
+        command: pipx
+        args: [install, uv==0.12.3]
+      - platforms: [linux, win32]
+        requires: python3
+        command: python3
+        args: [-m, pip, install, --user, uv==0.12.3]
+      - platforms: [win32]
+        requires: winget
+        command: winget
+        args: [install, --id, astral-sh.uv, --exact, --accept-source-agreements, --accept-package-agreements]
+  ast-grep:
+    description: AST-aware structural code search and controlled rewrites.
+    source: https://github.com/ast-grep/ast-grep
+    version: 0.43.0
+    commit: 5aa00e1dd5e0077589a6c0c23c640e39947403ec
+    requiredBy: [structural-search]
+    satisfiedBy: [sg, ast-grep]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: npm
+        command: npm
+        args: [install, --global, "@ast-grep/cli@0.43.0"]
+  agent-scan:
+    description: Agent, MCP, prompt, and skill supply-chain scanning.
+    source: https://pypi.org/project/snyk-agent-scan/
+    version: 0.5.17
+    requiredBy: [agent-supply-chain]
+    satisfiedBy: [snyk-agent-scan, uvx]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: uv
+        command: uv
+        args: [tool, install, "snyk-agent-scan==0.5.17"]
+      - platforms: [darwin, linux, win32]
+        requires: pipx
+        command: pipx
+        args: [install, "snyk-agent-scan==0.5.17"]
+      - platforms: [darwin, linux, win32]
+        requires: python3
+        command: python3
+        args: [-m, pip, install, --user, "snyk-agent-scan==0.5.17"]
+  osv-scanner:
+    description: Dependency vulnerability scanning against the OSV database.
+    source: https://github.com/google/osv-scanner
+    version: 2.5.0
+    commit: 0af25542cef1b8980cdad15d8bddc3d953cb2de2
+    requiredBy: [dependency-vulnerability]
+    satisfiedBy: [osv-scanner]
+    installers:
+      - platforms: [darwin, linux]
+        requires: brew
+        command: brew
+        args: [install, osv-scanner]
+      - platforms: [darwin, linux, win32]
+        requires: go
+        command: go
+        args: [install, "github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.5.0"]

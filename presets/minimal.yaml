@@ -1,11 +1,16 @@
-schemaVersion: 1
+schemaVersion: 2
 name: minimal
-description: Portable policies and Orditra-authored skills only.
-components:
-  policies: true
-  bundledSkills: true
-  externalSkills: false
-  contextMode: false
-  serena: false
-  astGrep: false
-
+description: Zero-network policies, core skills, verification, and portable reports.
+capabilities:
+  policies: { mode: always }
+  workflow-core: { mode: always }
+  external-skills: { mode: off }
+  context-protection: { mode: off }
+  semantic-code: { mode: off }
+  structural-search: { mode: off }
+  current-docs: { mode: registered }
+  repository-map: { mode: registered }
+  evidence-report: { mode: always }
+  agent-supply-chain: { mode: registered }
+  dependency-vulnerability: { mode: off }
+  action-security: { mode: off }

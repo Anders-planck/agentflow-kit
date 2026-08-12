@@ -1,0 +1,24 @@
+{
+  "name": "orditra",
+  "version": "0.2.0",
+  "description": "A reversible, context-efficient capability fabric for coding agents.",
+  "author": {
+    "name": "Anders-planck",
+    "url": "https://github.com/Anders-planck"
+  },
+  "homepage": "https://github.com/Anders-planck/orditra#readme",
+  "repository": "https://github.com/Anders-planck/orditra",
+  "license": "MIT",
+  "keywords": ["codex", "agent-skills", "mcp", "serena", "context-mode"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Orditra",
+    "shortDescription": "Context-efficient workflows for coding agents.",
+    "longDescription": "Orditra provides compact workflow routing, semantic and structural code guidance, current documentation, security gates, and evidence reports.",
+    "developerName": "Anders-planck",
+    "category": "Productivity",
+    "capabilities": ["Skills", "MCP", "Reports"],
+    "defaultPrompt": "Use Orditra to select the smallest safe workflow for this repository task."
+  }
+}

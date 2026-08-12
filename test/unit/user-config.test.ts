@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { loadUserConfig } from "../../src/user-config.js";
+import { applyUserConfigMigration, loadUserConfig, planUserConfigMigration } from "../../src/user-config.js";
 
 test("user configuration layers local values over versioned preferences", async () => {
   const home = await mkdtemp(join(tmpdir(), "orditra-config-"));
@@ -42,5 +42,20 @@ test("legacy pre-release configuration is used until an Orditra config overrides
     await mkdir(current, { recursive: true });
     await writeFile(join(current, "config.yaml"), "schemaVersion: 1\npreset: recommended\n", "utf8");
     assert.equal((await loadUserConfig(home)).preset, "recommended");
+  } finally { await rm(home, { recursive: true, force: true }); }
+});
+
+test("schema-v1 user configuration migrates to capability schema v2", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-config-migration-"));
+  const directory = join(home, ".config", "orditra");
+  try {
+    await mkdir(directory, { recursive: true });
+    await writeFile(join(directory, "config.yaml"), "schemaVersion: 1\npreset: recommended\ncomponents:\n  serena: false\n", "utf8");
+    const migration = await planUserConfigMigration(home);
+    assert.equal(migration.action, "migrate");
+    await applyUserConfigMigration(migration);
+    const config = await loadUserConfig(home);
+    assert.equal(config.schemaVersion, 2);
+    assert.equal(config.capabilities?.["semantic-code"]?.mode, "off");
   } finally { await rm(home, { recursive: true, force: true }); }
 });

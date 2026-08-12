@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "providers"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "providers": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "kind", "source", "clients", "risk", "network", "authenticated", "writes", "hooks"],
+        "properties": {
+          "description": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["builtin", "skill", "cli", "mcp", "plugin", "hook"] },
+          "source": { "type": "string", "minLength": 1 },
+          "version": { "type": "string" },
+          "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+          "executable": { "type": "string" },
+          "transport": { "enum": ["stdio", "http"] },
+          "endpoint": { "type": "string" },
+          "clients": { "type": "array", "items": { "enum": ["codex", "claude", "opencode"] }, "uniqueItems": true },
+          "risk": { "enum": ["low", "medium", "high"] },
+          "network": { "type": "boolean" },
+          "authenticated": { "type": "boolean" },
+          "writes": { "type": "boolean" },
+          "hooks": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

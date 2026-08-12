@@ -1,0 +1,5 @@
+schemaVersion: 2
+name: github
+description: Explicit authenticated GitHub integration.
+capabilities:
+  github-integration: { mode: project, provider: github-mcp }

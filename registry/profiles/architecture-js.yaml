@@ -1,0 +1,7 @@
+schemaVersion: 2
+name: architecture-js
+description: Dependency boundary analysis for JavaScript and TypeScript.
+detects: [javascript, typescript]
+capabilities:
+  dependency-architecture: { mode: project, provider: dependency-cruiser }
+skills: [dependency-architecture]

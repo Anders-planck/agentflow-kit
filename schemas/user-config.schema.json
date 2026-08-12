@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "enum": [1, 2] },
+    "preset": { "type": "string" },
+    "clients": {
+      "oneOf": [
+        { "const": "auto" },
+        { "type": "array", "items": { "enum": ["codex", "claude", "opencode"] }, "uniqueItems": true }
+      ]
+    },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policies": { "type": "boolean" },
+        "bundledSkills": { "type": "boolean" },
+        "externalSkills": { "type": "boolean" },
+        "contextMode": { "type": "boolean" },
+        "serena": { "type": "boolean" },
+        "astGrep": { "type": "boolean" }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["mode"],
+        "properties": {
+          "mode": { "enum": ["off", "registered", "auto", "project", "always"] },
+          "provider": { "type": "string" },
+          "options": { "type": "object" }
+        }
+      }
+    },
+    "profiles": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "externalSkillSets": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+  }
+}

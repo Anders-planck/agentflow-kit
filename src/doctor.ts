@@ -3,16 +3,17 @@ import { lstat, readFile, readdir, readlink } from "node:fs/promises";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
-import { findExecutable } from "./commands.js";
+import { capabilityIsActive, resolveCapabilities } from "./capabilities.js";
+import { findExecutable, formatCommand } from "./commands.js";
+import { planDependencies } from "./dependencies.js";
 import { parseJsonc } from "./jsonc.js";
-import { resolveAppPaths } from "./paths.js";
-import type { ClientName } from "./types.js";
+import { findProjectRoot, resolveAppPaths } from "./paths.js";
+import { containsKeyDeep } from "./planning/shared.js";
+import { loadPreset } from "./registry.js";
+import type { ClientName, Finding } from "./types.js";
+import { loadUserConfig } from "./user-config.js";
 
-export interface DoctorCheck {
-  id: string;
-  status: "ok" | "warn" | "fail";
-  message: string;
-}
+export type DoctorCheck = Finding;
 
 async function readOptional(path: string): Promise<string> {
   try { return await readFile(path, "utf8"); } catch (error) {
@@ -24,12 +25,6 @@ async function readOptional(path: string): Promise<string> {
 function versionOf(executable: string): string {
   const result = spawnSync(executable, ["--version"], { encoding: "utf8", timeout: 5000 });
   return `${result.stdout || result.stderr || "unknown"}`.trim().split("\n")[0] ?? "unknown";
-}
-
-function containsKeyDeep(value: unknown, key: string): boolean {
-  if (!value || typeof value !== "object") return false;
-  if (Object.prototype.hasOwnProperty.call(value, key)) return true;
-  return Object.values(value as Record<string, unknown>).some((child) => containsKeyDeep(child, key));
 }
 
 async function hashDirectory(path: string): Promise<string | null> {
@@ -52,36 +47,84 @@ async function hashDirectory(path: string): Promise<string | null> {
   } catch { return null; }
 }
 
-export async function runDoctor(home: string): Promise<DoctorCheck[]> {
+function finding(id: string, capability: string, status: Finding["status"], summary: string, remediation?: string): Finding {
+  return { id, capability, status, summary, ...(remediation ? { remediation } : {}) };
+}
+
+export async function runDoctor(home: string, root = findProjectRoot()): Promise<Finding[]> {
+  const started = Date.now();
   const appPaths = resolveAppPaths(home);
-  const checks: DoctorCheck[] = [];
-  const binaries: Array<[string, string]> = [
-    ["codex", "Codex"], ["claude", "Claude Code"], ["opencode", "OpenCode"],
-    ["serena", "Serena"], ["sg", "ast-grep"], ["uvx", "uvx"], ["node", "Node.js"],
+  const checks: Finding[] = [];
+  const userConfig = await loadUserConfig(home, root);
+  const preset = await loadPreset(root, userConfig.preset ?? "recommended");
+  const resolved = await resolveCapabilities(root, preset, userConfig);
+  const transactionText = await readOptional(join(appPaths.appStateDir, "transaction.json"));
+  if (transactionText) {
+    const transaction = JSON.parse(transactionText) as { status?: string; currentItem?: string };
+    checks.push(finding(
+      "transaction-recovery",
+      "installer",
+      transaction.status === "recovery-required" ? "error" : "warning",
+      `Incomplete installer transaction: ${transaction.status ?? "unknown"}${transaction.currentItem ? ` at ${transaction.currentItem}` : ""}`,
+      "Inspect the transaction journal and run rollback before another install.",
+    ));
+  } else {
+    checks.push(finding("transaction-recovery", "installer", "pass", "No incomplete installer transaction"));
+  }
+
+  const binaries: Array<[string, string, string]> = [
+    ["codex", "Codex", "client"], ["claude", "Claude Code", "client"], ["opencode", "OpenCode", "client"],
+    ["serena", "Serena", "semantic-code"], ["sg", "ast-grep", "structural-search"], ["uvx", "uvx", "semantic-code"], ["node", "Node.js", "runtime"],
   ];
   const found = new Map<string, string>();
-  for (const [binary, label] of binaries) {
+  for (const [binary, label, capability] of binaries) {
     const executable = findExecutable(binary);
     if (executable) {
       found.set(binary, executable);
-      checks.push({ id: `binary-${binary}`, status: "ok", message: `${label}: ${versionOf(executable)}` });
-    } else if (["serena", "sg"].includes(binary)) {
-      checks.push({ id: `binary-${binary}`, status: "warn", message: `${label} not found on PATH` });
+      checks.push(finding(`binary-${binary}`, capability, "pass", `${label}: ${versionOf(executable)}`));
     }
+  }
+
+  const dependencies = await planDependencies({
+    home,
+    root,
+    dryRun: true,
+    json: false,
+    yes: false,
+    skipExternal: false,
+  });
+  for (const dependency of dependencies.items) {
+    checks.push(finding(
+      `dependency-${dependency.name}`,
+      dependency.requiredBy.join(","),
+      dependency.status === "satisfied" ? "pass" : dependency.status === "missing" ? "warning" : "error",
+      dependency.status === "satisfied" ? `${dependency.name} dependency is available` : `${dependency.name} dependency is required but unavailable`,
+      dependency.spec ? `Run ${formatCommand(dependency.spec)} or rerun orditra install and approve dependency installation.` : "Install it manually or disable the requiring capability.",
+    ));
+  }
+
+  for (const [capability, selection] of Object.entries(resolved.selections)) {
+    if (!capabilityIsActive(selection) || !selection.provider) continue;
+    const provider = resolved.providers[selection.provider];
+    if (!provider?.executable || provider.kind === "mcp" && selection.provider === "serena") continue;
+    const aliases = selection.provider === "ast-grep"
+      ? ["sg", "ast-grep"]
+      : selection.provider === "agent-scan" ? ["snyk-agent-scan", "uvx"] : [provider.executable];
+    const executable = aliases.map((name) => findExecutable(name)).find(Boolean);
+    checks.push(finding(
+      `provider-${selection.provider}`,
+      capability,
+      executable ? "pass" : "warning",
+      executable ? `${selection.provider} available: ${versionOf(executable)}` : `${selection.provider} is active but unavailable on PATH`,
+      executable ? undefined : `Install the pinned provider or set ${capability}.mode to registered/off.`,
+    ));
   }
 
   const codexConfig = await readOptional(join(appPaths.home, ".codex", "config.toml"));
   if (found.has("codex")) {
-    checks.push({
-      id: "codex-context-mode",
-      status: /plugins\."context-mode@context-mode"/.test(codexConfig) ? "ok" : "warn",
-      message: /plugins\."context-mode@context-mode"/.test(codexConfig) ? "Codex context-mode plugin configured" : "Codex context-mode plugin missing",
-    });
-    checks.push({
-      id: "codex-serena",
-      status: /\[mcp_servers\.serena\]/i.test(codexConfig) ? "ok" : "warn",
-      message: /\[mcp_servers\.serena\]/i.test(codexConfig) ? "Codex Serena MCP configured" : "Codex Serena MCP missing",
-    });
+    checks.push(finding("codex-context-mode", "context-protection", /plugins\."context-mode@context-mode"/.test(codexConfig) ? "pass" : "warning", /plugins\."context-mode@context-mode"/.test(codexConfig) ? "Codex context-mode plugin configured" : "Codex context-mode plugin missing"));
+    checks.push(finding("codex-serena", "semantic-code", /\[mcp_servers\.serena\]/i.test(codexConfig) ? "pass" : "warning", /\[mcp_servers\.serena\]/i.test(codexConfig) ? "Codex Serena MCP configured" : "Codex Serena MCP missing"));
+    checks.push(finding("codex-context7", "current-docs", /\[mcp_servers\.context7\]/i.test(codexConfig) ? "pass" : "warning", /\[mcp_servers\.context7\]/i.test(codexConfig) ? "Codex Context7 MCP configured" : "Codex Context7 MCP missing"));
   }
 
   const claudeSettingsText = await readOptional(join(appPaths.home, ".claude", "settings.json"));
@@ -90,16 +133,9 @@ export async function runDoctor(home: string): Promise<DoctorCheck[]> {
   const claudeState = parseJsonc<Record<string, unknown>>(claudeStateText || "{}", "Claude state");
   if (found.has("claude")) {
     const plugins = (claudeSettings.enabledPlugins ?? {}) as Record<string, unknown>;
-    checks.push({
-      id: "claude-context-mode",
-      status: Object.prototype.hasOwnProperty.call(plugins, "context-mode@context-mode") ? "ok" : "warn",
-      message: Object.prototype.hasOwnProperty.call(plugins, "context-mode@context-mode") ? "Claude context-mode plugin configured" : "Claude context-mode plugin missing",
-    });
-    checks.push({
-      id: "claude-serena",
-      status: containsKeyDeep(claudeState, "serena") ? "ok" : "warn",
-      message: containsKeyDeep(claudeState, "serena") ? "Claude Serena MCP configured" : "Claude Serena MCP missing",
-    });
+    checks.push(finding("claude-context-mode", "context-protection", Object.prototype.hasOwnProperty.call(plugins, "context-mode@context-mode") ? "pass" : "warning", Object.prototype.hasOwnProperty.call(plugins, "context-mode@context-mode") ? "Claude context-mode plugin configured" : "Claude context-mode plugin missing"));
+    checks.push(finding("claude-serena", "semantic-code", containsKeyDeep(claudeState, "serena") ? "pass" : "warning", containsKeyDeep(claudeState, "serena") ? "Claude Serena MCP configured" : "Claude Serena MCP missing"));
+    checks.push(finding("claude-context7", "current-docs", containsKeyDeep(claudeState, "context7") ? "pass" : "warning", containsKeyDeep(claudeState, "context7") ? "Claude Context7 MCP configured" : "Claude Context7 MCP missing"));
   }
 
   const opencodeText = await readOptional(join(appPaths.configDir, "opencode", "opencode.json"));
@@ -107,14 +143,12 @@ export async function runDoctor(home: string): Promise<DoctorCheck[]> {
   if (found.has("opencode")) {
     const plugins = Array.isArray(opencode.plugin) ? opencode.plugin : [];
     const mcp = (opencode.mcp ?? {}) as Record<string, unknown>;
-    checks.push({ id: "opencode-context-mode", status: plugins.includes("context-mode") ? "ok" : "warn", message: plugins.includes("context-mode") ? "OpenCode context-mode plugin configured" : "OpenCode context-mode plugin missing" });
-    checks.push({ id: "opencode-serena", status: Object.prototype.hasOwnProperty.call(mcp, "serena") ? "ok" : "warn", message: Object.prototype.hasOwnProperty.call(mcp, "serena") ? "OpenCode Serena MCP configured" : "OpenCode Serena MCP missing" });
+    checks.push(finding("opencode-context-mode", "context-protection", plugins.includes("context-mode") ? "pass" : "warning", plugins.includes("context-mode") ? "OpenCode context-mode plugin configured" : "OpenCode context-mode plugin missing"));
+    checks.push(finding("opencode-serena", "semantic-code", Object.prototype.hasOwnProperty.call(mcp, "serena") ? "pass" : "warning", Object.prototype.hasOwnProperty.call(mcp, "serena") ? "OpenCode Serena MCP configured" : "OpenCode Serena MCP missing"));
+    checks.push(finding("opencode-context7", "current-docs", Object.prototype.hasOwnProperty.call(mcp, "context7") ? "pass" : "warning", Object.prototype.hasOwnProperty.call(mcp, "context7") ? "OpenCode Context7 MCP configured" : "OpenCode Context7 MCP missing"));
   }
 
-  const roots: Record<"agents" | "claude", string> = {
-    agents: join(appPaths.home, ".agents", "skills"),
-    claude: join(appPaths.home, ".claude", "skills"),
-  };
+  const roots = { agents: join(appPaths.home, ".agents", "skills"), claude: join(appPaths.home, ".claude", "skills") };
   let agentNames: string[] = [];
   let claudeNames: string[] = [];
   try { agentNames = await readdir(roots.agents); } catch { /* Optional. */ }
@@ -126,21 +160,15 @@ export async function runDoctor(home: string): Promise<DoctorCheck[]> {
     const claudePath = join(roots.claude, name);
     try {
       const [agentStat, claudeStat] = await Promise.all([lstat(agentPath), lstat(claudePath)]);
-      if (agentStat.isSymbolicLink() && claudeStat.isSymbolicLink()) {
-        if ((await readlink(agentPath)) === (await readlink(claudePath))) continue;
-      }
+      if (agentStat.isSymbolicLink() && claudeStat.isSymbolicLink() && (await readlink(agentPath)) === (await readlink(claudePath))) continue;
     } catch { /* Fall through to hashing. */ }
     if ((await hashDirectory(agentPath)) !== (await hashDirectory(claudePath))) divergent.push(name);
   }
-  checks.push({
-    id: "skill-divergence",
-    status: divergent.length ? "warn" : "ok",
-    message: divergent.length ? `Divergent duplicate skills: ${divergent.sort().join(", ")}` : `${common.length} duplicate skill names are content-identical or share a target`,
-  });
+  checks.push(finding("skill-divergence", "workflow-core", divergent.length ? "warning" : "pass", divergent.length ? `Divergent duplicate skills: ${divergent.sort().join(", ")}` : `${common.length} duplicate skill names are content-identical or share a target`));
+  checks.push({ id: "doctor-duration", capability: "reporting", status: "info", summary: `Doctor completed in ${Date.now() - started}ms`, durationMs: Date.now() - started });
   return checks;
 }
 
-export function detectedClients(checks: DoctorCheck[]): ClientName[] {
-  return (["codex", "claude", "opencode"] as const).filter((client) => checks.some((check) => check.id === `binary-${client}` && check.status === "ok"));
+export function detectedClients(checks: Finding[]): ClientName[] {
+  return (["codex", "claude", "opencode"] as const).filter((client) => checks.some((check) => check.id === `binary-${client}` && check.status === "pass"));
 }
-

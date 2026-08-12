@@ -154,3 +154,28 @@ test("skills linked to a previous Orditra release upgrade automatically", async 
     await rm(home, { recursive: true, force: true });
   }
 });
+
+test("recommended plan configures Context7 through every client adapter", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-context7-"));
+  const bin = join(home, "bin");
+  const originalPath = process.env.PATH;
+  try {
+    await mkdir(bin, { recursive: true });
+    for (const name of ["codex", "claude", "opencode", "uvx", "node", "sg"]) {
+      const target = join(bin, name);
+      await writeFile(target, "#!/bin/sh\necho test 1.0.0\n", "utf8");
+      await chmod(target, 0o755);
+    }
+    process.env.PATH = bin;
+    const options: GlobalOptions = { home, root, preset: "recommended", dryRun: true, json: false, yes: true, skipExternal: true };
+    const plan = await buildInstallPlan(options);
+    assert.ok(plan.items.some((item) => item.kind === "command" && item.id === "codex-context7"));
+    assert.ok(plan.items.some((item) => item.kind === "command" && item.id === "claude-context7"));
+    const opencode = plan.items.find((item) => item.kind === "write" && item.id === "opencode-config");
+    assert.ok(opencode?.kind === "write");
+    assert.match(opencode.content, /mcp\.context7\.com/);
+  } finally {
+    process.env.PATH = originalPath;
+    await rm(home, { recursive: true, force: true });
+  }
+});

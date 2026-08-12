@@ -1,0 +1,5 @@
+schemaVersion: 2
+name: deep-security
+description: Explicit heavyweight static security analysis.
+capabilities:
+  deep-security: { mode: project, provider: semgrep }

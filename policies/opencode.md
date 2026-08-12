@@ -9,3 +9,6 @@ semantic code operations, ast-grep for structural syntax, and `rg` for text.
 Check project bootstrap prerequisites before tracker- or domain-dependent
 workflow skills.
 
+Keep remote MCP endpoints explicit in OpenCode JSON and never write tokens into
+the shared repository. Project-only capabilities belong in repository config,
+not the global OpenCode tool list.

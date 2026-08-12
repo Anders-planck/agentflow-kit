@@ -12,7 +12,7 @@ test("project init creates once and preserves thereafter", async () => {
     const first = await planProjectInit(root);
     assert.equal(first.action, "create");
     await applyProjectInit(first);
-    assert.match(await readFile(first.target, "utf8"), /schemaVersion: 1/);
+    assert.match(await readFile(first.target, "utf8"), /schemaVersion: 2/);
     const second = await planProjectInit(root);
     assert.equal(second.action, "preserve");
   } finally { await rm(root, { recursive: true, force: true }); }

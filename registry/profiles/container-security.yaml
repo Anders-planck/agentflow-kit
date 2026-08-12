@@ -1,0 +1,5 @@
+schemaVersion: 2
+name: container-security
+description: Explicit container, filesystem, and IaC security scanning.
+capabilities:
+  container-security: { mode: project, provider: trivy }

@@ -1,5 +1,95 @@
 export type ClientName = "codex" | "claude" | "opencode";
 
+export type CapabilityMode = "off" | "registered" | "auto" | "project" | "always";
+export type RiskLevel = "low" | "medium" | "high";
+export type ReportFormat = "terminal" | "json" | "markdown" | "sarif" | "html";
+
+export interface CapabilitySelection {
+  mode: CapabilityMode;
+  provider?: string;
+  options?: Record<string, unknown>;
+}
+
+export interface CapabilityDefinition {
+  description: string;
+  defaultProvider: string;
+  defaultMode: CapabilityMode;
+  risk: RiskLevel;
+  conflicts?: string[];
+  projectSignals?: string[];
+  skills?: string[];
+}
+
+export interface CapabilityRegistry {
+  schemaVersion: 2;
+  capabilities: Record<string, CapabilityDefinition>;
+}
+
+export interface ProviderDefinition {
+  description: string;
+  kind: "builtin" | "skill" | "cli" | "mcp" | "plugin" | "hook";
+  source: string;
+  version?: string;
+  commit?: string;
+  executable?: string;
+  transport?: "stdio" | "http";
+  endpoint?: string;
+  clients: ClientName[];
+  risk: RiskLevel;
+  network: boolean;
+  authenticated: boolean;
+  writes: boolean;
+  hooks: boolean;
+}
+
+export interface ProviderRegistry {
+  schemaVersion: 2;
+  providers: Record<string, ProviderDefinition>;
+}
+
+export interface DependencyInstaller {
+  platforms?: NodeJS.Platform[];
+  requires: string;
+  command: string;
+  args: string[];
+}
+
+export interface DependencyDefinition {
+  description: string;
+  source: string;
+  version?: string;
+  commit?: string;
+  requiredBy: string[];
+  satisfiedBy: string[];
+  installers: DependencyInstaller[];
+}
+
+export interface DependencyRegistry {
+  schemaVersion: 1;
+  dependencies: Record<string, DependencyDefinition>;
+}
+
+export interface DependencyPlanItem {
+  name: string;
+  description: string;
+  source: string;
+  version?: string;
+  commit?: string;
+  requiredBy: string[];
+  satisfiedBy: string[];
+  status: "satisfied" | "missing" | "unresolved";
+  spec?: CommandSpec;
+}
+
+export interface ProfileDefinition {
+  schemaVersion: 2;
+  name: string;
+  description: string;
+  detects?: string[];
+  capabilities: Record<string, CapabilitySelection>;
+  skills?: string[];
+}
+
 export interface Components {
   policies: boolean;
   bundledSkills: boolean;
@@ -10,18 +100,21 @@ export interface Components {
 }
 
 export interface Preset {
-  schemaVersion: number;
+  schemaVersion: 1 | 2;
   name: string;
   description: string;
   components: Components;
+  capabilities: Record<string, CapabilitySelection>;
   externalSkillSets?: string[];
 }
 
 export interface UserConfig {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   preset?: string;
   clients?: "auto" | ClientName[];
   components?: Partial<Components>;
+  capabilities?: Record<string, CapabilitySelection>;
+  profiles?: string[];
   externalSkillSets?: string[];
 }
 
@@ -35,6 +128,7 @@ export interface ToolRegistry {
     executable?: string;
     fallbackExecutable?: string;
     executables?: string[];
+    requires?: Record<string, string>;
   }>;
 }
 
@@ -44,6 +138,15 @@ export interface SkillSource {
   version: string;
   license: string;
   licensePath: string;
+  licenseDigest?: string;
+  reviewedAt?: string;
+  risk?: RiskLevel;
+  contentDigests?: Record<string, string>;
+  permissions?: {
+    network: boolean;
+    hooks: boolean;
+    writesOutsideProject: boolean;
+  };
   sets: Record<string, string[]>;
 }
 
@@ -67,6 +170,7 @@ export interface CommandSpec {
   args: string[];
   inverse?: CommandSpec;
   cwd?: string;
+  timeoutMs?: number;
 }
 
 export type PlanItem =
@@ -81,7 +185,20 @@ export interface InstallPlan {
   preset: Preset;
   items: PlanItem[];
   clients: Record<ClientName, boolean>;
+  capabilities: Record<string, CapabilitySelection>;
   releaseDir: string;
+  dependencies?: DependencyPlanItem[];
+}
+
+export interface Finding {
+  id: string;
+  capability: string;
+  status: "pass" | "info" | "warning" | "error";
+  summary: string;
+  evidence?: string[];
+  remediation?: string;
+  source?: string;
+  durationMs?: number;
 }
 
 export interface PathSnapshot {
@@ -117,4 +234,9 @@ export interface GlobalOptions {
   yes: boolean;
   skipExternal: boolean;
   adoptExisting?: boolean;
+  format?: ReportFormat;
+  output?: string;
+  budget?: number;
+  skipDependencies?: boolean;
+  assumedExecutables?: string[];
 }

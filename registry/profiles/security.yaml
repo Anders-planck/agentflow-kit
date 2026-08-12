@@ -1,0 +1,9 @@
+schemaVersion: 2
+name: security
+description: Agent, dependency, and workflow supply-chain checks.
+detects: [lockfile, github-actions]
+capabilities:
+  agent-supply-chain: { mode: project, provider: agent-scan }
+  dependency-vulnerability: { mode: project, provider: osv-scanner }
+  action-security: { mode: project, provider: zizmor }
+skills: [agent-supply-chain]

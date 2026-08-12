@@ -1,0 +1,5 @@
+schemaVersion: 2
+name: multi-repo-symbols
+description: Explicit persistent multi-repository symbol graph interchange.
+capabilities:
+  persistent-symbol-graph: { mode: project, provider: scip }
