@@ -1,0 +1,5 @@
+# Safe, public source of truth for every supported client.
+schemaVersion: 1
+preset: recommended
+clients: auto
+components: {}

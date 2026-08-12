@@ -98,6 +98,15 @@ machine-only overrides belong in `config.local.yaml`; keep the main file in a
 dotfiles repository or symlink it from one. Agentflow validates both layers and
 never reads credentials from them.
 
+This repository ships a safe public default at `config/config.yaml`. Clone
+owners can make it their live, versioned configuration with:
+
+```bash
+mkdir -p ~/.config/agentflow-kit
+mv ~/.config/agentflow-kit/config.yaml ~/.config/agentflow-kit/config.backup.yaml
+ln -s "$PWD/config/config.yaml" ~/.config/agentflow-kit/config.yaml
+```
+
 ## Workflow integration
 
 Skills are not a detached command catalog. `registry/workflows.yaml` maps the
