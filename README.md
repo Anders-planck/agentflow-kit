@@ -1,9 +1,13 @@
-# Agentflow Kit
+# Orditra
 
-Agentflow Kit is a public, reversible configuration toolkit for Codex, Claude
+Orditra is a public, reversible configuration toolkit for Codex, Claude
 Code, and OpenCode. It combines workflow-aware Agent Skills with context-mode,
 Serena, and ast-grep without copying entire client home directories or storing
 credentials.
+
+The name **Orditra** is coined from the Italian *ordito* (the warp that holds a
+fabric together) and orchestration: one durable configuration fabric across
+different coding agents.
 
 > Status: `0.1.0` development preview. The public GitHub repository is live;
 > the npm package is not published yet.
@@ -18,7 +22,7 @@ credentials.
 - Client-specific guidance through bounded managed blocks.
 - Backups, idempotent updates, doctor output, and rollback.
 
-Agentflow never owns client authentication files, session history, Serena
+Orditra never owns client authentication files, session history, Serena
 memories, or context-mode indexes.
 
 ## Build from source
@@ -36,22 +40,22 @@ node dist/src/cli.js doctor
 Or run the public GitHub package directly:
 
 ```bash
-npx --yes github:Anders-planck/agentflow-kit install --preset recommended
-npx --yes github:Anders-planck/agentflow-kit doctor
+npx --yes github:Anders-planck/orditra install --preset recommended
+npx --yes github:Anders-planck/orditra doctor
 ```
 
 After the first public npm release, the consumer path will be:
 
 ```bash
-npx agentflow-kit@latest install --preset recommended
-npx agentflow-kit@latest doctor
+npx orditra@latest install --preset recommended
+npx orditra@latest doctor
 ```
 
 ## Presets
 
 | Preset | Includes |
 |---|---|
-| `minimal` | Shared policy and Agentflow-authored portable skills |
+| `minimal` | Shared policy and Orditra-authored portable skills |
 | `recommended` | Minimal + context-mode + Serena + ast-grep checks + curated Matt Pocock flow |
 | `full` | Recommended + all stable public Matt Pocock workflow skills |
 
@@ -61,15 +65,15 @@ opt-ins.
 ## Commands
 
 ```text
-agentflow install       Preview, confirm, back up, and apply a preset
-agentflow diff          Show the install plan without writing
-agentflow init          Create user-level Agentflow preferences
-agentflow doctor        Check clients, integrations, binaries, and skill drift
-agentflow update        Reconcile the current release and preset
-agentflow rollback      Restore the latest pre-install snapshot
-agentflow uninstall     Preview removal; add --yes to unwind all changesets
-agentflow project init  Add a non-destructive project marker
-agentflow validate      Validate registries, skills, and public safety
+orditra install       Preview, confirm, back up, and apply a preset
+orditra diff          Show the install plan without writing
+orditra init          Create user-level Orditra preferences
+orditra doctor        Check clients, integrations, binaries, and skill drift
+orditra update        Reconcile the current release and preset
+orditra rollback      Restore the latest pre-install snapshot
+orditra uninstall     Preview removal; add --yes to unwind all changesets
+orditra project init  Add a non-destructive project marker
+orditra validate      Validate registries, skills, and public safety
 ```
 
 All mutating workflows support `--dry-run`; automation can use `--yes --json`.
@@ -80,8 +84,8 @@ unwinds the complete changeset history, including updates and adoptions.
 
 ## One-file configuration
 
-Run `agentflow init`, then manage every client from
-`~/.config/agentflow-kit/config.yaml`:
+Run `orditra init`, then manage every client from
+`~/.config/orditra/config.yaml`:
 
 ```yaml
 schemaVersion: 1
@@ -92,25 +96,32 @@ components:
   astGrep: true
 ```
 
-`agentflow update --yes` reconciles Codex, Claude Code, and OpenCode from that
+`orditra update --yes` reconciles Codex, Claude Code, and OpenCode from that
 single source of truth. The command line `--preset` wins over the file. Optional
 machine-only overrides belong in `config.local.yaml`; keep the main file in a
-dotfiles repository or symlink it from one. Agentflow validates both layers and
+dotfiles repository or symlink it from one. Orditra validates both layers and
 never reads credentials from them.
 
 This repository ships a safe public default at `config/config.yaml`. Clone
 owners can make it their live, versioned configuration with:
 
 ```bash
-mkdir -p ~/.config/agentflow-kit
-mv ~/.config/agentflow-kit/config.yaml ~/.config/agentflow-kit/config.backup.yaml
-ln -s "$PWD/config/config.yaml" ~/.config/agentflow-kit/config.yaml
+mkdir -p ~/.config/orditra
+mv ~/.config/orditra/config.yaml ~/.config/orditra/config.backup.yaml
+ln -s "$PWD/config/config.yaml" ~/.config/orditra/config.yaml
 ```
+
+### Upgrade from the provisional name
+
+Early `0.1.0` checkouts used the provisional name `agentflow-kit`. Orditra reads
+that configuration and manifest history automatically, then makes its own XDG
+paths canonical on the first successful update. Existing backups remain part
+of the uninstall chain.
 
 ## Workflow integration
 
 Skills are not a detached command catalog. `registry/workflows.yaml` maps the
-engineering lifecycle to Agentflow and pinned upstream skills. Only metadata is
+engineering lifecycle to Orditra and pinned upstream skills. Only metadata is
 available before routing; full skill instructions and references load on
 demand.
 
@@ -137,7 +148,7 @@ remote or publishing npm.
 
 ## License and upstream work
 
-Agentflow-authored code and skills use the MIT License. Matt Pocock's skills
-are fetched from a pinned commit under their MIT License; Agentflow preserves
+Orditra-authored code and skills use the MIT License. Matt Pocock's skills
+are fetched from a pinned commit under their MIT License; Orditra preserves
 the upstream license and does not install both plugin and copied forms.
 context-mode, Serena, and ast-grep remain separate upstream integrations.

@@ -9,7 +9,7 @@ test("managed Markdown blocks are idempotent and preserve surrounding content", 
   const twice = upsertMarkdownBlock(once, "# Managed\n\nRule.");
   assert.equal(twice, once);
   assert.match(once, /Keep me/);
-  assert.match(once, /agentflow-kit:start/);
+  assert.match(once, /orditra:start/);
   assert.equal(removeMarkdownBlock(once), original);
 });
 
@@ -20,3 +20,11 @@ test("managed Markdown blocks can be updated in place", () => {
   assert.match(second, /\ntwo\n/);
 });
 
+test("legacy provisional markers migrate without duplicate policy blocks", () => {
+  const legacy = "# Existing\n\n<!-- agentflow-kit:start -->\nold\n<!-- agentflow-kit:end -->\n";
+  const migrated = upsertMarkdownBlock(legacy, "new");
+  assert.doesNotMatch(migrated, /agentflow-kit:start/);
+  assert.match(migrated, /orditra:start/);
+  assert.equal((migrated.match(/orditra:start/g) ?? []).length, 1);
+  assert.match(migrated, /\nnew\n/);
+});

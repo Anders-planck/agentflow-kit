@@ -151,7 +151,7 @@ export async function buildInstallPlan(options: GlobalOptions): Promise<InstallP
     const source = join(root, "skills", name);
     const target = join(releaseSkills, name);
     if ((await directoryDigest(source)) !== (await directoryDigest(target))) {
-      items.push({ kind: "copy-dir", id: `copy-bundled-skill-${name}`, description: `Install Agentflow skill ${name} into release ${version}`, source, target });
+      items.push({ kind: "copy-dir", id: `copy-bundled-skill-${name}`, description: `Install Orditra skill ${name} into release ${version}`, source, target });
     }
   }
 
@@ -321,7 +321,7 @@ export async function buildInstallPlan(options: GlobalOptions): Promise<InstallP
   }
 
   if (clients.opencode && opencodeText !== (await readOptional(configPaths.opencode))) {
-    items.push({ kind: "write", id: "opencode-config", description: "Merge Agentflow integrations into OpenCode", target: configPaths.opencode, content: opencodeText });
+    items.push({ kind: "write", id: "opencode-config", description: "Merge Orditra integrations into OpenCode", target: configPaths.opencode, content: opencodeText });
   }
 
   if (preset.components.astGrep && !findExecutable("sg") && !findExecutable("ast-grep")) {

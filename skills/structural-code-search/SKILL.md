@@ -4,7 +4,7 @@ description: Uses ast-grep for AST-aware code search, lint rules, and controlled
 license: MIT
 compatibility: Requires sg or ast-grep; project scans require sgconfig.yml.
 metadata:
-  author: agentflow-kit
+  author: orditra
   version: "0.1.0"
 ---
 

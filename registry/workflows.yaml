@@ -4,7 +4,7 @@ stages:
     description: Establish project tracker, labels, domain docs, and agent guidance.
     routes:
       - skill: project-bootstrap
-        source: agentflow
+        source: orditra
         triggers: [new project, initialize agent config, configure repository]
       - skill: setup-matt-pocock-skills
         source: mattpocock
@@ -13,7 +13,7 @@ stages:
     description: Resolve unclear goals and understand unfamiliar systems.
     routes:
       - skill: workflow-router
-        source: agentflow
+        source: orditra
       - skill: ask-matt
         source: mattpocock
       - skill: grill-me
@@ -39,9 +39,9 @@ stages:
       - skill: tdd
         source: mattpocock
       - skill: serena-symbolic-code
-        source: agentflow
+        source: orditra
       - skill: structural-code-search
-        source: agentflow
+        source: orditra
   diagnosis:
     description: Reproduce, minimize, instrument, fix, and regression-test bugs.
     routes:

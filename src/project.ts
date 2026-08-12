@@ -23,8 +23,10 @@ export interface ProjectInitResult {
 
 export async function planProjectInit(directory: string): Promise<ProjectInitResult> {
   const root = resolve(directory);
-  const target = join(root, ".agentflow", "project.yaml");
+  const target = join(root, ".orditra", "project.yaml");
   if (pathExists(target)) return { target, action: "preserve" };
+  const legacyTarget = join(root, ".agentflow", "project.yaml");
+  if (pathExists(legacyTarget)) return { target: legacyTarget, action: "preserve" };
   return { target, action: "create", content: PROJECT_CONFIG };
 }
 

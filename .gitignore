@@ -10,7 +10,8 @@ dist/
 
 # Never publish local state, credentials, backups, or rendered home configs.
 local-state/
-.agentflow-state/
+.orditra-state/
+.agentflow-state/ # legacy pre-release state
 .serena/
 config.local.yaml
 auth.json

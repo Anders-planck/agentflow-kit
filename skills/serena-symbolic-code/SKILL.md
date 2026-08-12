@@ -4,7 +4,7 @@ description: Uses Serena MCP for symbol discovery, references, dependency unders
 license: MIT
 compatibility: Requires the Serena MCP server and an activated project.
 metadata:
-  author: agentflow-kit
+  author: orditra
   version: "0.1.0"
 ---
 
@@ -27,5 +27,5 @@ See [tool routing](references/tool-routing.md) for when Serena is not the right 
 - Do not use Serena for logs, Markdown prose, config strings, or filename search.
 - Avoid onboarding ephemeral repositories unless memories will be reused.
 - Do not treat zero results as proof until project activation and language support are verified.
-- Prefer the client-specific Serena context configured by Agentflow.
+- Prefer the client-specific Serena context configured by Orditra.
 

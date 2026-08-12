@@ -1,6 +1,6 @@
-# Agentflow integration for OpenCode
+# Orditra integration for OpenCode
 
-Follow the shared Agentflow core policy. OpenCode discovers portable skills in
+Follow the shared Orditra core policy. OpenCode discovers portable skills in
 `~/.agents/skills`; do not maintain a third duplicate skill tree.
 
 Use the context-mode plugin for large output and continuity, Serena MCP for

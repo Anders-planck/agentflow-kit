@@ -1,6 +1,6 @@
 # Architecture
 
-Agentflow uses one canonical model and three adapters.
+Orditra uses one canonical model and three adapters.
 
 ```text
 presets + registries + skills + policy
@@ -18,9 +18,9 @@ presets + registries + skills + policy
 
 The toolkit owns only:
 
-- release assets under the Agentflow XDG data directory;
+- release assets under the Orditra XDG data directory;
 - symlinks that point to those release assets;
-- content inside explicit `agentflow-kit:start/end` blocks;
+- content inside explicit `orditra:start/end` blocks;
 - config keys recorded in the install plan;
 - external commands recorded with an inverse operation.
 
@@ -31,12 +31,12 @@ context-mode data, and Serena memories are never inputs to the renderer.
 
 ## Transaction
 
-Before each mutation, Agentflow snapshots the original path under its XDG
+Before each mutation, Orditra snapshots the original path under its XDG
 state directory. Commands execute through official client CLIs and record an
 inverse. A failure runs command inverses and restores path snapshots in reverse
 order. Successful changesets form a manifest history: `rollback` unwinds the
 latest one, while `uninstall` unwinds the complete history back to the original
-pre-Agentflow state.
+pre-Orditra state.
 
 ## Skill distribution
 
@@ -51,6 +51,6 @@ locations link to the same release content.
 core defaults < preset < user config < local config < CLI flags
 ```
 
-`~/.config/agentflow-kit/config.yaml` is the versionable source of truth.
+`~/.config/orditra/config.yaml` is the versionable source of truth.
 `config.local.yaml` overlays machine-only preferences and is gitignored; an
 explicit `--preset` remains the highest-precedence preset selection.

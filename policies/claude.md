@@ -1,6 +1,6 @@
-# Agentflow integration for Claude Code
+# Orditra integration for Claude Code
 
-Follow the shared Agentflow core policy. Load skill bodies progressively and
+Follow the shared Orditra core policy. Load skill bodies progressively and
 avoid duplicating plugin-provided skills with user-level copies.
 
 Route large output through context-mode. Prefer Serena MCP tools for semantic

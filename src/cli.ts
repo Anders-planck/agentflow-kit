@@ -146,7 +146,7 @@ async function main(): Promise<void> {
     const manifests = await uninstallAll({ ...options, dryRun: preview });
     const paths = manifests.reduce((total, manifest) => total + manifest.snapshots.length, 0);
     if (preview) console.log(options.json ? JSON.stringify(manifests, null, 2) : `Would unwind ${manifests.length} changesets and restore ${paths} paths; pass --yes to apply`);
-    else console.log(options.json ? JSON.stringify(manifests, null, 2) : `Uninstalled Agentflow by unwinding ${manifests.length} changesets`);
+    else console.log(options.json ? JSON.stringify(manifests, null, 2) : `Uninstalled Orditra by unwinding ${manifests.length} changesets`);
     return;
   }
   if (command === "project" && parsed.subcommand === "init") {
@@ -167,9 +167,9 @@ async function main(): Promise<void> {
 }
 
 function printHelp(): void {
-  console.log(`agentflow-kit
+  console.log(`orditra
 
-Usage: agentflow <command> [options]
+Usage: orditra <command> [options]
 
 Commands:
   install          Preview and apply a preset
@@ -179,7 +179,7 @@ Commands:
   update           Reconcile the selected preset with the installed release
   rollback         Restore the latest pre-install snapshot
   uninstall        Preview removal; add --yes to unwind every changeset
-  project init     Create .agentflow/project.yaml without overwriting
+  project init     Create .orditra/project.yaml without overwriting
   validate         Validate repository YAML, skills, and public-safety rules
   version          Print toolkit version
 
@@ -197,6 +197,6 @@ Options:
 }
 
 main().catch((error: unknown) => {
-  console.error(`agentflow: ${(error as Error).message}`);
+  console.error(`orditra: ${(error as Error).message}`);
   process.exitCode = 1;
 });

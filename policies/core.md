@@ -1,4 +1,4 @@
-# Agentflow core policy
+# Orditra core policy
 
 Use skills as the workflow layer and load their bodies only when the task
 matches. Respect explicit user choices over automatic routing.

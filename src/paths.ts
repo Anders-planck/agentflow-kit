@@ -5,23 +5,33 @@ import { fileURLToPath } from "node:url";
 import type { AppPaths } from "./types.js";
 
 export function findProjectRoot(start = dirname(fileURLToPath(import.meta.url))): string {
-  if (process.env.AGENTFLOW_ROOT) return resolve(process.env.AGENTFLOW_ROOT);
+  const configuredRoot = process.env.ORDITRA_ROOT ?? process.env.AGENTFLOW_ROOT;
+  if (configuredRoot) return resolve(configuredRoot);
   let current = resolve(start);
   while (true) {
     const packagePath = join(current, "package.json");
     try {
       const packageJson = JSON.parse(readFileSync(packagePath, "utf8")) as { name?: string };
-      if (packageJson.name === "agentflow-kit") return current;
+      if (packageJson.name === "orditra") return current;
     } catch {
       // Continue toward the filesystem root.
     }
     const parent = dirname(current);
-    if (parent === current) throw new Error("Unable to locate the agentflow-kit root");
+    if (parent === current) throw new Error("Unable to locate the orditra root");
     current = parent;
   }
 }
 
 export function resolveAppPaths(home: string): AppPaths {
+  return resolveNamedAppPaths(home, "orditra");
+}
+
+/** Compatibility for installations made under the provisional pre-release name. */
+export function resolveLegacyAppPaths(home: string): AppPaths {
+  return resolveNamedAppPaths(home, "agentflow-kit");
+}
+
+function resolveNamedAppPaths(home: string, name: string): AppPaths {
   const normalizedHome = resolve(home);
   const configDir = join(normalizedHome, ".config");
   const dataDir = join(normalizedHome, ".local", "share");
@@ -31,9 +41,9 @@ export function resolveAppPaths(home: string): AppPaths {
     configDir,
     dataDir,
     stateDir,
-    appConfigDir: join(configDir, "agentflow-kit"),
-    appDataDir: join(dataDir, "agentflow-kit"),
-    appStateDir: join(stateDir, "agentflow-kit"),
+    appConfigDir: join(configDir, name),
+    appDataDir: join(dataDir, name),
+    appStateDir: join(stateDir, name),
   };
 }
 
@@ -54,4 +64,3 @@ export function isExecutable(path: string): boolean {
     return false;
   }
 }
-

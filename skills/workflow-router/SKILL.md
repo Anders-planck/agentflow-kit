@@ -4,7 +4,7 @@ description: Routes engineering work to the smallest suitable skill flow and che
 license: MIT
 compatibility: Requires Agent Skills support; uses only skills available in the active client.
 metadata:
-  author: agentflow-kit
+  author: orditra
   version: "0.1.0"
 ---
 

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 
 import { runCommand } from "./commands.js";
 import { loadSkillSources, packageVersion } from "./registry.js";
-import { resolveAppPaths } from "./paths.js";
+import { resolveAppPaths, resolveLegacyAppPaths } from "./paths.js";
 import type { AppPaths, AppliedCommand, GlobalOptions, InstallManifest, InstallPlan, PathSnapshot, PlanItem } from "./types.js";
 
 async function snapshotPath(target: string, backupDir: string, index: number): Promise<PathSnapshot> {
@@ -39,13 +39,19 @@ async function restoreSnapshot(snapshot: PathSnapshot): Promise<void> {
 
 async function atomicWrite(target: string, content: string): Promise<void> {
   await mkdir(dirname(target), { recursive: true });
-  const temporary = `${target}.agentflow-${process.pid}.tmp`;
+  const temporary = `${target}.orditra-${process.pid}.tmp`;
   await writeFile(temporary, content, { encoding: "utf8", mode: 0o600 });
   await rename(temporary, target);
 }
 
 async function loadManifestHistory(appPaths: AppPaths): Promise<string[]> {
-  const historyPath = join(appPaths.appStateDir, "manifest-history.json");
+  return await readManifestHistory(appPaths.appStateDir)
+    ?? await readManifestHistory(resolveLegacyAppPaths(appPaths.home).appStateDir)
+    ?? [];
+}
+
+async function readManifestHistory(stateDirectory: string): Promise<string[] | null> {
+  const historyPath = join(stateDirectory, "manifest-history.json");
   try {
     const value = JSON.parse(await readFile(historyPath, "utf8")) as unknown;
     if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) throw new Error("Invalid manifest history");
@@ -54,10 +60,10 @@ async function loadManifestHistory(appPaths: AppPaths): Promise<string[]> {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   }
   try {
-    const current = JSON.parse(await readFile(join(appPaths.appStateDir, "install-manifest.json"), "utf8")) as InstallManifest;
+    const current = JSON.parse(await readFile(join(stateDirectory, "install-manifest.json"), "utf8")) as InstallManifest;
     return [join(current.backupDir, "manifest.json")];
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw error;
   }
 }
@@ -85,12 +91,18 @@ async function restoreManifest(manifest: InstallManifest, failures: string[]): P
 async function saveManifestPointers(appPaths: AppPaths, entries: Array<{ path: string; manifest: InstallManifest }>): Promise<void> {
   const historyPath = join(appPaths.appStateDir, "manifest-history.json");
   const currentPath = join(appPaths.appStateDir, "install-manifest.json");
+  const legacyStateDir = resolveLegacyAppPaths(appPaths.home).appStateDir;
+  const legacyPointers = [
+    join(legacyStateDir, "manifest-history.json"),
+    join(legacyStateDir, "install-manifest.json"),
+  ];
   if (!entries.length) {
-    await Promise.all([rm(historyPath, { force: true }), rm(currentPath, { force: true })]);
+    await Promise.all([rm(historyPath, { force: true }), rm(currentPath, { force: true }), ...legacyPointers.map((path) => rm(path, { force: true }))]);
     return;
   }
   await atomicWrite(historyPath, `${JSON.stringify(entries.map((entry) => entry.path), null, 2)}\n`);
   await atomicWrite(currentPath, `${JSON.stringify(entries.at(-1)?.manifest, null, 2)}\n`);
+  await Promise.all(legacyPointers.map((path) => rm(path, { force: true })));
 }
 
 async function installExternalSkills(item: Extract<PlanItem, { kind: "external-skills" }>, root: string): Promise<void> {
@@ -102,7 +114,7 @@ async function installExternalSkills(item: Extract<PlanItem, { kind: "external-s
     if (path.startsWith("/") || path.split("/").includes("..")) throw new Error(`Unsafe external source path: ${path}`);
   }
 
-  const temporary = await mkdtemp(join(tmpdir(), "agentflow-skills-"));
+  const temporary = await mkdtemp(join(tmpdir(), "orditra-skills-"));
   try {
     runCommand({ command: "git", args: ["-C", temporary, "init", "--quiet"] });
     runCommand({ command: "git", args: ["-C", temporary, "remote", "add", "origin", source.repository] });
@@ -210,7 +222,7 @@ export async function rollbackLatest(options: GlobalOptions): Promise<InstallMan
   const appPaths = resolveAppPaths(options.home);
   const history = await loadManifests(appPaths);
   const latest = history.at(-1);
-  if (!latest) throw new Error("No Agentflow installation manifest found");
+  if (!latest) throw new Error("No Orditra installation manifest found");
   const manifest = latest.manifest;
   if (options.dryRun) return manifest;
 
@@ -225,7 +237,7 @@ export async function rollbackLatest(options: GlobalOptions): Promise<InstallMan
 export async function uninstallAll(options: GlobalOptions): Promise<InstallManifest[]> {
   const appPaths = resolveAppPaths(options.home);
   const history = await loadManifests(appPaths);
-  if (!history.length) throw new Error("No Agentflow installation manifest found");
+  if (!history.length) throw new Error("No Orditra installation manifest found");
   const manifests = history.map((entry) => entry.manifest);
   if (options.dryRun) return manifests;
 

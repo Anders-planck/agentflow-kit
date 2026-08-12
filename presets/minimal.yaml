@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: minimal
-description: Portable policies and Agentflow-authored skills only.
+description: Portable policies and Orditra-authored skills only.
 components:
   policies: true
   bundledSkills: true

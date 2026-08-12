@@ -1,10 +1,10 @@
 ---
 name: project-bootstrap
-description: Initializes a repository for portable agent workflows without overwriting existing conventions. Use for new projects, when Agentflow project markers are missing, or before skills that require issue-tracker, triage-label, CONTEXT.md, or ADR configuration.
+description: Initializes a repository for portable agent workflows without overwriting existing conventions. Use for new projects, when Orditra project markers are missing, or before skills that require issue-tracker, triage-label, CONTEXT.md, or ADR configuration.
 license: MIT
-compatibility: Requires the agentflow CLI for deterministic file generation.
+compatibility: Requires the orditra CLI for deterministic file generation.
 metadata:
-  author: agentflow-kit
+  author: orditra
   version: "0.1.0"
 ---
 
@@ -14,7 +14,7 @@ metadata:
 
 1. Inspect existing `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, docs, and issue configuration.
 2. Infer safe values from current files; ask only for choices that change behavior.
-3. Preview with `agentflow project init --dry-run --dir <project>`.
+3. Preview with `orditra project init --dry-run --dir <project>`.
 4. Apply only after the preview matches the intended scope.
 5. Validate generated YAML and show the resulting diff.
 

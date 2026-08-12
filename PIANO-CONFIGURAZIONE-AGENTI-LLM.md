@@ -1,7 +1,7 @@
-# Piano di configurazione unificata e distribuibile per Codex, Claude Code e OpenCode
+# Orditra — configurazione unificata e distribuibile per Codex, Claude Code e OpenCode
 
 Data dell'analisi: 12 agosto 2026  
-Stato: piano operativo, nessuna configurazione utente modificata
+Stato: implementato, applicato localmente e pubblicato
 
 ## Obiettivo
 

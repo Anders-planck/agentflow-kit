@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { parse } from "yaml";
 
-import { resolveAppPaths } from "./paths.js";
+import { resolveAppPaths, resolveLegacyAppPaths } from "./paths.js";
 import type { ClientName, Components, UserConfig } from "./types.js";
 
 const CLIENTS = new Set<ClientName>(["codex", "claude", "opencode"]);
@@ -65,14 +65,21 @@ function validate(config: Record<string, unknown>): UserConfig {
 
 export async function loadUserConfig(home: string): Promise<UserConfig> {
   const directory = resolveAppPaths(home).appConfigDir;
-  const [shared, local] = await Promise.all([
+  const legacyDirectory = resolveLegacyAppPaths(home).appConfigDir;
+  const [legacyShared, legacyLocal, shared, local] = await Promise.all([
+    readOptionalYaml(join(legacyDirectory, "config.yaml")),
+    readOptionalYaml(join(legacyDirectory, "config.local.yaml")),
     readOptionalYaml(join(directory, "config.yaml")),
     readOptionalYaml(join(directory, "config.local.yaml")),
   ]);
   const merged: Record<string, unknown> = {
+    ...legacyShared,
+    ...legacyLocal,
     ...shared,
     ...local,
     components: {
+      ...((legacyShared.components as Record<string, unknown> | undefined) ?? {}),
+      ...((legacyLocal.components as Record<string, unknown> | undefined) ?? {}),
       ...((shared.components as Record<string, unknown> | undefined) ?? {}),
       ...((local.components as Record<string, unknown> | undefined) ?? {}),
     },

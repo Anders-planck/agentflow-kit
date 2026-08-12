@@ -1,12 +1,15 @@
-const HTML_START = "<!-- agentflow-kit:start -->";
-const HTML_END = "<!-- agentflow-kit:end -->";
+const HTML_START = "<!-- orditra:start -->";
+const HTML_END = "<!-- orditra:end -->";
+const LEGACY_HTML_START = "<!-- agentflow-kit:start -->";
+const LEGACY_HTML_END = "<!-- agentflow-kit:end -->";
 
 export function upsertMarkdownBlock(original: string, block: string): string {
-  return upsertBlock(original, block.trim(), HTML_START, HTML_END);
+  const migrated = removeBlock(original, LEGACY_HTML_START, LEGACY_HTML_END);
+  return upsertBlock(migrated, block.trim(), HTML_START, HTML_END);
 }
 
 export function removeMarkdownBlock(original: string): string {
-  return removeBlock(original, HTML_START, HTML_END);
+  return removeBlock(removeBlock(original, HTML_START, HTML_END), LEGACY_HTML_START, LEGACY_HTML_END);
 }
 
 function upsertBlock(original: string, block: string, start: string, end: string): string {
@@ -31,4 +34,3 @@ function removeBlock(original: string, start: string, end: string): string {
   const after = normalized.slice(endIndex + end.length).trimStart();
   return [before, after].filter(Boolean).join("\n\n") + (before || after ? "\n" : "");
 }
-
