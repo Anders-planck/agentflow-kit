@@ -5,8 +5,8 @@ Code, and OpenCode. It combines workflow-aware Agent Skills with context-mode,
 Serena, and ast-grep without copying entire client home directories or storing
 credentials.
 
-> Status: `0.1.0` development preview. The npm package and public GitHub remote
-> are not published yet. Build from source until the release checklist passes.
+> Status: `0.1.0` development preview. The public GitHub repository is live;
+> the npm package is not published yet.
 
 ## What it manages
 
@@ -31,6 +31,13 @@ npm test
 node dist/src/cli.js diff --preset recommended
 node dist/src/cli.js install --preset recommended --yes
 node dist/src/cli.js doctor
+```
+
+Or run the public GitHub package directly:
+
+```bash
+npx --yes github:Anders-planck/agentflow-kit install --preset recommended
+npx --yes github:Anders-planck/agentflow-kit doctor
 ```
 
 After the first public npm release, the consumer path will be:
