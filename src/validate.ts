@@ -161,6 +161,22 @@ export async function validateRepository(root: string): Promise<ValidationIssue[
       }
       if (provider.authenticated && provider.risk !== "high") issues.push({ level: "error", path: "registry/providers.yaml", message: `${name} is authenticated and must be classified high risk` });
     }
+    for (const presetPath of files.filter((file) => /presets\/.+\.yaml$/.test(file))) {
+      const preset = parse(await readFile(presetPath, "utf8")) as {
+        capabilities?: Record<string, { mode?: string; provider?: string }>;
+      };
+      for (const [capabilityName, selection] of Object.entries(preset.capabilities ?? {})) {
+        if (selection.mode === "off" || selection.mode === "registered") continue;
+        const providerName = selection.provider ?? capabilities.capabilities[capabilityName]?.defaultProvider;
+        if (providerName && providers.providers[providerName]?.authenticated) {
+          issues.push({
+            level: "error",
+            path: presetPath,
+            message: `Authenticated provider ${providerName} must remain opt-in in preset ${basename(presetPath, ".yaml")}`,
+          });
+        }
+      }
+    }
     for (const profile of Object.values(profiles)) {
       for (const [capability, selection] of Object.entries(profile.capabilities)) {
         if (!capabilities.capabilities[capability]) issues.push({ level: "error", path: `registry/profiles/${profile.name}.yaml`, message: `Unknown capability ${capability}` });

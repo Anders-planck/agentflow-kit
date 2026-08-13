@@ -26,3 +26,13 @@ test("unknown profiles fail closed", async () => {
   const preset = await loadPreset(root, "minimal");
   await assert.rejects(resolveCapabilities(root, preset, { schemaVersion: 2, profiles: ["missing"] }), /Unknown capability profile/);
 });
+
+test("authenticated Agent Scan remains explicit opt-in in public presets", async () => {
+  for (const name of ["recommended", "full"]) {
+    const preset = await loadPreset(root, name);
+    const resolved = await resolveCapabilities(root, preset, { schemaVersion: 2 });
+    assert.equal(resolved.selections["agent-supply-chain"]?.mode, "registered", name);
+    assert.equal(resolved.providers["agent-scan"]?.authenticated, true, name);
+    assert.equal(resolved.providers["agent-scan"]?.risk, "high", name);
+  }
+});

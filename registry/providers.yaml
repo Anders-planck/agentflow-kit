@@ -167,9 +167,9 @@ providers:
     commit: ea959964ce4728426fca9fa78c9e7809b972f313
     executable: snyk-agent-scan
     clients: [codex, claude, opencode]
-    risk: medium
+    risk: high
     network: true
-    authenticated: false
+    authenticated: true
     writes: false
     hooks: false
   osv-scanner:

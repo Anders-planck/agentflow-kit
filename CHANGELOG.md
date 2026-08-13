@@ -4,6 +4,8 @@ All notable changes follow Keep a Changelog. Versions follow Semantic Versioning
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-13
+
 ### Added
 
 - Schema-v2 capability, provider, profile, reporter, compatibility, and security-policy registries.
@@ -29,6 +31,8 @@ All notable changes follow Keep a Changelog. Versions follow Semantic Versioning
 ### Fixed
 
 - Project detection ignores Orditra-generated agent/config directories, so repeated `project sync` runs are idempotent.
+- External skill digests use deterministic case-folded ordering and portable `/` paths, matching the reviewed lock across platforms while continuing to fail closed on content changes.
+- Snyk Agent Scan is classified as authenticated/high-risk, remains explicit opt-in, requires `SNYK_TOKEN` when activated, and no longer blocks default `recommended` or `full` installs.
 
 ## [0.1.2] - 2026-08-11
 

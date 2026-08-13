@@ -94,3 +94,42 @@ test("doctor verifies configured clients and detects divergent skill copies", as
     await rm(home, { recursive: true, force: true });
   }
 });
+
+test("doctor reports missing credentials for explicitly enabled Agent Scan", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-doctor-agent-scan-"));
+  const originalPath = process.env.PATH;
+  const originalPortableHome = process.env.ORDITRA_PORTABLE_HOME;
+  const originalSnykToken = process.env.SNYK_TOKEN;
+  const portableHome = join(home, "portable");
+  try {
+    const bin = join(home, "bin");
+    await mkdir(bin, { recursive: true });
+    const executable = join(bin, "snyk-agent-scan");
+    await writeFile(executable, "#!/bin/sh\necho snyk-agent-scan 0.5.17\n", "utf8");
+    await chmod(executable, 0o755);
+    process.env.PATH = bin;
+    process.env.ORDITRA_PORTABLE_HOME = portableHome;
+    delete process.env.SNYK_TOKEN;
+    const configDir = join(portableHome, "config", "orditra");
+    await mkdir(configDir, { recursive: true });
+    await writeFile(join(configDir, "config.yaml"), [
+      "schemaVersion: 2",
+      "preset: recommended",
+      "capabilities:",
+      "  agent-supply-chain: { mode: auto, provider: agent-scan }",
+      "",
+    ].join("\n"), "utf8");
+
+    const checks = await runDoctor(home, process.cwd());
+    const provider = checks.find((check) => check.id === "provider-agent-scan");
+    assert.equal(provider?.status, "warning");
+    assert.match(provider?.summary ?? "", /SNYK_TOKEN/);
+  } finally {
+    process.env.PATH = originalPath;
+    if (originalPortableHome === undefined) delete process.env.ORDITRA_PORTABLE_HOME;
+    else process.env.ORDITRA_PORTABLE_HOME = originalPortableHome;
+    if (originalSnykToken === undefined) delete process.env.SNYK_TOKEN;
+    else process.env.SNYK_TOKEN = originalSnykToken;
+    await rm(home, { recursive: true, force: true });
+  }
+});

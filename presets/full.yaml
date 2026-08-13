@@ -15,7 +15,7 @@ capabilities:
   browser-qa: { mode: project, provider: playwright-cli }
   web-performance: { mode: registered, provider: chrome-devtools-mcp }
   dependency-architecture: { mode: project, provider: dependency-cruiser }
-  agent-supply-chain: { mode: auto, provider: agent-scan }
+  agent-supply-chain: { mode: registered, provider: agent-scan }
   dependency-vulnerability: { mode: auto, provider: osv-scanner }
   action-security: { mode: project, provider: zizmor }
   evals: { mode: registered, provider: promptfoo }
@@ -26,4 +26,3 @@ capabilities:
   telemetry: { mode: off, provider: opentelemetry }
 externalSkillSets:
   - mattpocock-stable
-

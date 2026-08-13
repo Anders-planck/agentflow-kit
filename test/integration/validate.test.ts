@@ -83,8 +83,12 @@ test("repository validator reports independent portability and supply-chain viol
     await writeFile(workflowsPath, stringify(workflows), "utf8");
 
     const presetPath = join(fixture, "presets", "minimal.yaml");
-    const preset = parse(await readFile(presetPath, "utf8")) as Record<string, unknown>;
+    const preset = parse(await readFile(presetPath, "utf8")) as {
+      externalSkillSets?: string[];
+      capabilities: Record<string, { mode: string; provider?: string }>;
+    };
     preset.externalSkillSets = ["missing-set"];
+    preset.capabilities["agent-supply-chain"] = { mode: "auto", provider: "agent-scan" };
     await writeFile(presetPath, stringify(preset), "utf8");
 
     await writeFile(join(fixture, ".github", "workflows", "unpinned.yml"), [
@@ -126,6 +130,7 @@ test("repository validator reports independent portability and supply-chain viol
       "has no routes",
       "Unknown skill route",
       "Unknown external skill set",
+      "Authenticated provider agent-scan must remain opt-in",
       "GitHub Action must use a full commit SHA",
     ]) assert.ok(messages.some((message) => message.includes(expected)), `missing validation issue: ${expected}`);
 
