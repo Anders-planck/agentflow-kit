@@ -27,8 +27,11 @@ test("minimal install is reversible and idempotent", async () => {
     const options: GlobalOptions = { home, root, preset: "minimal", dryRun: false, json: false, yes: true, skipExternal: true };
     const first = await buildInstallPlan(options);
     assert.ok(first.items.some((item) => item.kind === "write"));
-    const manifest = await applyPlan(first, options);
+    const progress: string[] = [];
+    const manifest = await applyPlan(first, options, (completed, total, label) => progress.push(`${completed}/${total} ${label}`));
     assert.ok(manifest);
+    assert.match(progress.at(0) ?? "", /^0\/\d+ /);
+    assert.match(progress.at(-1) ?? "", /^\d+\/\d+ /);
     assert.match(await readFile(join(home, ".codex", "AGENTS.md"), "utf8"), /orditra:start/);
     assert.ok((await lstat(join(home, ".agents", "skills", "workflow-router"))).isSymbolicLink());
     assert.ok((await lstat(join(home, ".claude", "skills", "workflow-router"))).isSymbolicLink());
@@ -36,7 +39,9 @@ test("minimal install is reversible and idempotent", async () => {
     const second = await buildInstallPlan(options);
     assert.deepEqual(second.items, []);
 
-    await rollbackLatest(options);
+    const rollbackProgress: string[] = [];
+    await rollbackLatest(options, (completed, total, label) => rollbackProgress.push(`${completed}/${total} ${label}`));
+    assert.deepEqual(rollbackProgress, ["0/1 Restoring the latest changeset", "1/1 Restored the latest changeset"]);
     await assert.rejects(lstat(join(home, ".codex", "AGENTS.md")));
     await assert.rejects(lstat(join(home, ".agents", "skills", "workflow-router")));
   } finally {
@@ -176,6 +181,42 @@ test("recommended plan configures Context7 through every client adapter", async 
     const opencode = plan.items.find((item) => item.kind === "write" && item.id === "opencode-config");
     assert.ok(opencode?.kind === "write");
     assert.match(opencode.content, /mcp\.context7\.com/);
+  } finally {
+    process.env.PATH = originalPath;
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("full plan configures every selected MCP provider through each client adapter", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-full-mcp-"));
+  const bin = join(home, "bin");
+  const originalPath = process.env.PATH;
+  try {
+    await mkdir(bin, { recursive: true });
+    for (const name of ["codex", "claude", "opencode", "uvx"]) {
+      const target = join(bin, name);
+      await writeFile(target, "#!/bin/sh\necho test 1.0.0\n", "utf8");
+      await chmod(target, 0o755);
+    }
+    process.env.PATH = bin;
+    const options: GlobalOptions = {
+      home,
+      root,
+      preset: "full",
+      dryRun: true,
+      json: false,
+      yes: true,
+      skipExternal: true,
+      assumedExecutables: ["probe", "chrome-devtools-mcp"],
+    };
+    const plan = await buildInstallPlan(options);
+    for (const server of ["probe", "chrome-devtools", "github"]) {
+      assert.ok(plan.items.some((item) => item.kind === "command" && item.id === `codex-${server}`), server);
+      assert.ok(plan.items.some((item) => item.kind === "command" && item.id === `claude-${server}`), server);
+    }
+    const opencode = plan.items.find((item) => item.kind === "write" && item.id === "opencode-config");
+    assert.ok(opencode?.kind === "write");
+    for (const server of ["probe", "chrome-devtools", "github"]) assert.match(opencode.content, new RegExp(`"${server}"`));
   } finally {
     process.env.PATH = originalPath;
     await rm(home, { recursive: true, force: true });

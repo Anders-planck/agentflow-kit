@@ -32,6 +32,8 @@ export interface ProviderDefinition {
   version?: string;
   commit?: string;
   executable?: string;
+  args?: string[];
+  serverName?: string;
   transport?: "stdio" | "http";
   endpoint?: string;
   clients: ClientName[];
@@ -224,6 +226,8 @@ export interface InstallManifest {
   commands: AppliedCommand[];
   ownedSymlinks: string[];
 }
+
+export type ProgressCallback = (completed: number, total: number, label: string) => void;
 
 export interface GlobalOptions {
   home: string;

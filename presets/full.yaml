@@ -1,6 +1,6 @@
 schemaVersion: 2
 name: full
-description: Expanded registered catalog; authenticated and heavyweight providers remain explicit opt-in.
+description: Explicit maximum-capability preset; every selected provider is activated and required.
 capabilities:
   policies: { mode: always }
   workflow-core: { mode: always }
@@ -10,19 +10,23 @@ capabilities:
   structural-search: { mode: auto, provider: ast-grep }
   current-docs: { mode: auto, provider: context7 }
   repository-map: { mode: auto, provider: repomix, options: { tokenBudget: 2000 } }
-  large-code-search: { mode: registered, provider: probe }
+  large-code-search: { mode: auto, provider: probe }
   evidence-report: { mode: always }
-  browser-qa: { mode: project, provider: playwright-cli }
-  web-performance: { mode: registered, provider: chrome-devtools-mcp }
-  dependency-architecture: { mode: project, provider: dependency-cruiser }
-  agent-supply-chain: { mode: registered, provider: agent-scan }
+  visual-export: { mode: auto, provider: d2 }
+  browser-qa: { mode: auto, provider: playwright-cli }
+  web-performance: { mode: auto, provider: chrome-devtools-mcp }
+  dependency-architecture: { mode: auto, provider: dependency-cruiser }
+  agent-supply-chain: { mode: auto, provider: agent-scan }
   dependency-vulnerability: { mode: auto, provider: osv-scanner }
-  action-security: { mode: project, provider: zizmor }
-  evals: { mode: registered, provider: promptfoo }
-  local-knowledge: { mode: off, provider: qmd }
-  github-integration: { mode: off, provider: github-mcp }
-  hardened-mcp: { mode: off, provider: toolhive }
-  deep-security: { mode: registered, provider: semgrep }
-  telemetry: { mode: off, provider: opentelemetry }
+  action-security: { mode: auto, provider: zizmor }
+  evals: { mode: auto, provider: promptfoo }
+  local-knowledge: { mode: auto, provider: qmd }
+  github-integration: { mode: auto, provider: github-mcp }
+  hardened-mcp: { mode: auto, provider: toolhive }
+  deep-security: { mode: auto, provider: semgrep }
+  container-security: { mode: auto, provider: trivy }
+  code-property-graph: { mode: auto, provider: joern }
+  persistent-symbol-graph: { mode: auto, provider: scip }
+  telemetry: { mode: auto, provider: opentelemetry }
 externalSkillSets:
   - mattpocock-stable

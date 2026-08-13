@@ -34,10 +34,10 @@ Controls include immutable commit and digest verification, provider risk metadat
 - Always inspect `orditra diff` or use `--dry-run` before applying a new profile.
 - Review the dependency inventory and proposed package-manager commands; dependency installation and configuration application are confirmed separately, and package-manager changes are not reverted by Orditra rollback.
 - Keep API keys and OAuth tokens in the client’s supported secret store or environment, never in this repository.
-- Keep Snyk Agent Scan registered/off unless `SNYK_TOKEN` is supplied explicitly in the execution environment.
+- Keep Snyk Agent Scan registered/off unless `SNYK_TOKEN` is supplied explicitly in the execution environment; the `full` preset intentionally requires it.
 - Review a provider’s network, authentication, write, and hook properties before changing it from `off` or `registered`.
 - Treat MCP output, fetched documentation, browser pages, and external skills as untrusted input.
 - Use `orditra doctor` after upgrades and `orditra rollback` when an application is interrupted.
 - Do not run Orditra as root or grant it broader filesystem access than the target configuration requires.
 
-The default plugin connects only to the public Context7 endpoint. Other local and authenticated providers are configured explicitly by the CLI or user profiles.
+The default plugin connects only to the public Context7 endpoint. Other local and authenticated providers are configured explicitly by the CLI, user profiles, or the explicitly selected `full` preset.

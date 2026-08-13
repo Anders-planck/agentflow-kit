@@ -13,14 +13,14 @@ import { emitFindings } from "./output.js";
 export function registerDiagnosticCommands(program: Command): void {
   program.command("doctor").description("inspect clients, providers, integrations, and skills").action(async () => {
     const options = globalOptions(program);
-    const findings = await runDoctor(options.home, options.root);
+    const findings = await runDoctor(options.home, options.root, options.preset);
     await emitFindings(findings, options);
     if (findings.some((finding) => finding.status === "error")) process.exitCode = 1;
   });
 
   program.command("report").description("combine doctor and repository validation findings").action(async () => {
     const options = globalOptions(program);
-    const doctor = await runDoctor(options.home, options.root);
+    const doctor = await runDoctor(options.home, options.root, options.preset);
     const validation = (await validateRepository(options.root)).map((issue): Finding => ({
       id: `validation-${issue.path}-${issue.message}`,
       capability: "validation",

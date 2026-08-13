@@ -8,7 +8,7 @@ import { findExecutable, runCommand } from "./commands.js";
 import { loadSkillSources, packageVersion } from "./registry.js";
 import { resolveAppPaths, resolveLegacyAppPaths } from "./paths.js";
 import { directoryDigest } from "./planning/shared.js";
-import type { AppPaths, AppliedCommand, GlobalOptions, InstallManifest, InstallPlan, PathSnapshot, PlanItem } from "./types.js";
+import type { AppPaths, AppliedCommand, GlobalOptions, InstallManifest, InstallPlan, PathSnapshot, PlanItem, ProgressCallback } from "./types.js";
 
 async function assertExternalTreeSafe(path: string): Promise<void> {
   const stat = await lstat(path);
@@ -178,7 +178,7 @@ function itemTarget(item: PlanItem): string | null {
   return null;
 }
 
-export async function applyPlan(plan: InstallPlan, options: GlobalOptions): Promise<InstallManifest | null> {
+export async function applyPlan(plan: InstallPlan, options: GlobalOptions, onProgress?: ProgressCallback): Promise<InstallManifest | null> {
   const errors = plan.items.filter((item) => item.kind === "notice" && item.level === "error");
   if (errors.length) throw new Error(errors.map((item) => item.description).join("\n"));
   const actionable = plan.items.filter((item) => item.kind !== "notice" && !(options.skipExternal && (item.kind === "command" || item.kind === "external-skills")));
@@ -198,6 +198,7 @@ export async function applyPlan(plan: InstallPlan, options: GlobalOptions): Prom
 
   try {
     for (const [index, item] of actionable.entries()) {
+      onProgress?.(index, actionable.length, item.description);
       await atomicWrite(journalPath, `${JSON.stringify({ schemaVersion: 1, status: "applying", index, currentItem: item.id, snapshots: snapshots.length, commands: commands.length }, null, 2)}\n`);
       const target = itemTarget(item);
       if (target && !snapshotTargets.has(target)) {
@@ -229,6 +230,7 @@ export async function applyPlan(plan: InstallPlan, options: GlobalOptions): Prom
         case "notice":
           break;
       }
+      onProgress?.(index + 1, actionable.length, item.description);
     }
   } catch (error) {
     await atomicWrite(journalPath, `${JSON.stringify({ schemaVersion: 1, status: "rolling-back", error: (error as Error).message }, null, 2)}\n`);
@@ -269,7 +271,7 @@ export async function applyPlan(plan: InstallPlan, options: GlobalOptions): Prom
   return manifest;
 }
 
-export async function rollbackLatest(options: GlobalOptions): Promise<InstallManifest> {
+export async function rollbackLatest(options: GlobalOptions, onProgress?: ProgressCallback): Promise<InstallManifest> {
   const appPaths = resolveAppPaths(options.home);
   const history = await loadManifests(appPaths);
   const latest = history.at(-1);
@@ -278,14 +280,16 @@ export async function rollbackLatest(options: GlobalOptions): Promise<InstallMan
   if (options.dryRun) return manifest;
 
   const failures: string[] = [];
+  onProgress?.(0, 1, "Restoring the latest changeset");
   await restoreManifest(manifest, failures);
+  onProgress?.(1, 1, "Restored the latest changeset");
   history.pop();
   await saveManifestPointers(appPaths, history);
   if (failures.length) throw new Error(`Rollback completed with failures:\n${failures.join("\n")}`);
   return manifest;
 }
 
-export async function uninstallAll(options: GlobalOptions): Promise<InstallManifest[]> {
+export async function uninstallAll(options: GlobalOptions, onProgress?: ProgressCallback): Promise<InstallManifest[]> {
   const appPaths = resolveAppPaths(options.home);
   const history = await loadManifests(appPaths);
   if (!history.length) throw new Error("No Orditra installation manifest found");
@@ -293,7 +297,11 @@ export async function uninstallAll(options: GlobalOptions): Promise<InstallManif
   if (options.dryRun) return manifests;
 
   const failures: string[] = [];
-  for (const entry of [...history].reverse()) await restoreManifest(entry.manifest, failures);
+  for (const [index, entry] of [...history].reverse().entries()) {
+    onProgress?.(index, history.length, `Unwinding changeset ${index + 1} of ${history.length}`);
+    await restoreManifest(entry.manifest, failures);
+    onProgress?.(index + 1, history.length, `Unwound changeset ${index + 1} of ${history.length}`);
+  }
   await saveManifestPointers(appPaths, []);
   if (failures.length) throw new Error(`Uninstall completed with failures:\n${failures.join("\n")}`);
   return manifests;
@@ -309,7 +317,7 @@ async function childDirectories(path: string): Promise<string[]> {
   catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return []; throw error; }
 }
 
-export async function garbageCollect(options: GlobalOptions, retainReleases = 3): Promise<GarbageCollectionResult> {
+export async function garbageCollect(options: GlobalOptions, retainReleases = 3, onProgress?: ProgressCallback): Promise<GarbageCollectionResult> {
   const appPaths = resolveAppPaths(options.home);
   const history = await loadManifests(appPaths);
   const referencedBackups = new Set(history.map((entry) => resolve(entry.manifest.backupDir)));
@@ -338,6 +346,10 @@ export async function garbageCollect(options: GlobalOptions, retainReleases = 3)
   const keepNewest = new Set(releases.slice(-Math.max(0, retainReleases)).map((path) => resolve(path)));
   const orphanReleases = releases.filter((path) => !referencedReleases.has(resolve(path)) && !keepNewest.has(resolve(path)));
   const removed = [...orphanBackups, ...orphanReleases];
-  if (!options.dryRun) for (const path of removed) await rm(path, { recursive: true, force: true });
+  if (!options.dryRun) for (const [index, path] of removed.entries()) {
+    onProgress?.(index, removed.length, `Removing ${path}`);
+    await rm(path, { recursive: true, force: true });
+    onProgress?.(index + 1, removed.length, `Removed ${path}`);
+  }
   return { removed, retainedReleases: releases.filter((path) => !orphanReleases.includes(path)) };
 }

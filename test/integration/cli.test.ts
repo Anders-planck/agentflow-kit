@@ -1,13 +1,25 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-function runCli(args: string[], home?: string): string {
+function runCli(args: string[], home?: string, environment: NodeJS.ProcessEnv = {}): string {
   return execFileSync(process.execPath, ["dist/src/cli.js", ...args], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      ...(home ? { ORDITRA_PORTABLE_HOME: join(home, ".orditra-portable") } : {}),
+      ...environment,
+    },
+  });
+}
+
+function runCliWithFindings(args: string[], home?: string): string {
+  const result = spawnSync(process.execPath, ["dist/src/cli.js", ...args], {
     cwd: process.cwd(),
     encoding: "utf8",
     env: {
@@ -15,6 +27,8 @@ function runCli(args: string[], home?: string): string {
       ...(home ? { ORDITRA_PORTABLE_HOME: join(home, ".orditra-portable") } : {}),
     },
   });
+  if (result.error) throw result.error;
+  return result.stdout;
 }
 
 test("CLI exposes schema-driven commands and machine-readable maps", () => {
@@ -49,6 +63,31 @@ test("install dry-run reports active dependency provenance and skips registered 
     assert.ok(plan.dependencies.some((item) => item.name === "ast-grep" && item.source === "https://github.com/ast-grep/ast-grep"));
     assert.equal(plan.dependencies.some((item) => item.requiredBy.includes("agent-supply-chain")), false);
   } finally { await rm(home, { recursive: true, force: true }); }
+});
+
+test("doctor honors an explicit full preset", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-cli-doctor-full-"));
+  try {
+    const checks = JSON.parse(runCliWithFindings(["--home", home, "--preset", "full", "--json", "doctor"], home)) as Array<{ id: string }>;
+    assert.ok(checks.some((check) => check.id === "dependency-repomix"));
+    assert.ok(checks.some((check) => check.id === "dependency-agent-scan"));
+  } finally { await rm(home, { recursive: true, force: true }); }
+});
+
+test("full install fails before dependency mutation when required credentials are missing", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-cli-full-credentials-"));
+  const originalSnykToken = process.env.SNYK_TOKEN;
+  try {
+    delete process.env.SNYK_TOKEN;
+    assert.throws(
+      () => runCli(["--home", home, "--preset", "full", "--yes", "install"], home, { PATH: "" }),
+      /SNYK_TOKEN is not configured/,
+    );
+  } finally {
+    if (originalSnykToken === undefined) delete process.env.SNYK_TOKEN;
+    else process.env.SNYK_TOKEN = originalSnykToken;
+    await rm(home, { recursive: true, force: true });
+  }
 });
 
 test("CLI configuration, skill, and project commands expose portable behavior", async () => {

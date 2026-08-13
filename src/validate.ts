@@ -163,12 +163,13 @@ export async function validateRepository(root: string): Promise<ValidationIssue[
     }
     for (const presetPath of files.filter((file) => /presets\/.+\.yaml$/.test(file))) {
       const preset = parse(await readFile(presetPath, "utf8")) as {
+        name?: string;
         capabilities?: Record<string, { mode?: string; provider?: string }>;
       };
       for (const [capabilityName, selection] of Object.entries(preset.capabilities ?? {})) {
         if (selection.mode === "off" || selection.mode === "registered") continue;
         const providerName = selection.provider ?? capabilities.capabilities[capabilityName]?.defaultProvider;
-        if (providerName && providers.providers[providerName]?.authenticated) {
+        if (providerName && providers.providers[providerName]?.authenticated && preset.name !== "full") {
           issues.push({
             level: "error",
             path: presetPath,

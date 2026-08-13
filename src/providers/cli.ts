@@ -4,7 +4,6 @@ import type { CapabilitySelection, PlanItem, ProviderDefinition } from "../types
 
 const EXECUTABLE_ALIASES: Record<string, string[]> = {
   "ast-grep": ["sg", "ast-grep"],
-  "agent-scan": ["snyk-agent-scan", "uvx"],
 };
 
 export function planCliProviderNotices(
