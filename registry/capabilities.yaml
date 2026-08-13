@@ -44,7 +44,6 @@ capabilities:
     defaultProvider: repomix
     defaultMode: registered
     risk: low
-    conflicts: [large-code-search]
     projectSignals: [large-repository]
     skills: [large-codebase-map]
   large-code-search:
@@ -52,7 +51,6 @@ capabilities:
     defaultProvider: probe
     defaultMode: off
     risk: medium
-    conflicts: [repository-map]
     projectSignals: [large-repository]
     skills: [large-codebase-map]
   evidence-report:

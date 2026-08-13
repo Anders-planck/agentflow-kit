@@ -19,6 +19,8 @@
           "version": { "type": "string" },
           "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
           "executable": { "type": "string" },
+          "args": { "type": "array", "items": { "type": "string" } },
+          "serverName": { "type": "string", "pattern": "^[a-z0-9-]+$" },
           "transport": { "enum": ["stdio", "http"] },
           "endpoint": { "type": "string" },
           "clients": { "type": "array", "items": { "enum": ["codex", "claude", "opencode"] }, "uniqueItems": true },

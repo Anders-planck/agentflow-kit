@@ -50,7 +50,7 @@ test("skill explanation distinguishes bundled, installed, external, and unknown 
   }
 });
 
-test("configuration explanation highlights inactive and authenticated high-risk capabilities", async () => {
+test("full configuration explanation keeps every capability active and highlights authentication", async () => {
   const home = await mkdtemp(join(tmpdir(), "orditra-explain-config-"));
   const originalPortableHome = process.env.ORDITRA_PORTABLE_HOME;
   const portableHome = join(home, "portable");
@@ -70,7 +70,7 @@ test("configuration explanation highlights inactive and authenticated high-risk 
     const github = full.find((finding) => finding.id === "github-integration");
     assert.equal(github?.status, "warning");
     assert.match(github?.remediation ?? "", /explicit authentication/);
-    assert.ok(full.some((finding) => finding.status === "info"));
+    assert.equal(full.some((finding) => finding.status === "info"), false);
     assert.ok(full.some((finding) => finding.status === "pass"));
 
     const minimal = await explainConfiguration(home, process.cwd(), "minimal");

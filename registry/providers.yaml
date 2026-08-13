@@ -110,8 +110,11 @@ providers:
     description: AST/BM25 and optional LSP code search.
     kind: mcp
     source: https://github.com/probelabs/probe
-    commit: e34a3d4277a45acd2bd1463619bfb95ec067cc66
+    version: 0.6.0-rc88
+    commit: 868bae31b6141093e7e51c6a22322c99d972e0a8
     executable: probe
+    args: [mcp]
+    serverName: probe
     transport: stdio
     clients: [codex, claude, opencode]
     risk: medium
@@ -139,6 +142,7 @@ providers:
     version: 1.7.0
     commit: b58c613f4b05ade36bbf0d6ba44d5a525ec4d19a
     executable: chrome-devtools-mcp
+    serverName: chrome-devtools
     transport: stdio
     clients: [codex, claude, opencode]
     risk: high
@@ -215,7 +219,9 @@ providers:
     kind: mcp
     source: https://github.com/github/github-mcp-server
     commit: d6cab9757ac577eecf1821ff167895a76b342beb
-    transport: stdio
+    serverName: github
+    transport: http
+    endpoint: https://api.githubcopilot.com/mcp/
     clients: [codex, claude, opencode]
     risk: high
     network: true
@@ -226,7 +232,8 @@ providers:
     description: Local Markdown knowledge search.
     kind: cli
     source: https://github.com/tobi/qmd
-    commit: e428df76bc0274d9e93eb7ca3e95673315c42e90
+    version: 2.5.3
+    commit: 53232770867ccb16538c2c6034e7d891dffc9ce3
     executable: qmd
     clients: [codex, claude, opencode]
     risk: medium
@@ -262,7 +269,8 @@ providers:
     description: Optional container, filesystem, and IaC security scanner.
     kind: cli
     source: https://github.com/aquasecurity/trivy
-    commit: 333ec8083978d31a7dfc3d20a628290a2fdb2187
+    version: 0.73.0
+    commit: 40c73e5d6166dcc0346a1ab4e94499d1572854e4
     executable: trivy
     clients: [codex, claude, opencode]
     risk: medium
@@ -274,7 +282,8 @@ providers:
     description: Optional code-property-graph analysis engine.
     kind: cli
     source: https://github.com/joernio/joern
-    commit: 7a5118cf23ffcb0a62bc72542e41cfff9137962d
+    version: 4.0.600
+    commit: d661fa90174a423c5e9aa871280bd023b5ac526f
     executable: joern
     clients: [codex, claude, opencode]
     risk: medium
@@ -285,8 +294,9 @@ providers:
   d2:
     description: Optional polished diagram renderer.
     kind: cli
-    source: https://github.com/terrastruct/d2
-    commit: a0cb0de49cede832499a27d8619c63b26fc35729
+    source: https://github.com/d2lang/d2
+    version: 0.8.1
+    commit: 0a1b5d9be6f6956169c8a4e49f8b3a51bdf9ad9a
     executable: d2
     clients: [codex, claude, opencode]
     risk: low
@@ -298,7 +308,8 @@ providers:
     description: Optional persistent symbol graph interchange.
     kind: cli
     source: https://github.com/scip-code/scip
-    commit: 6407d1fbfe118c67a897c6969cb84d820dfaff5e
+    version: 0.9.0
+    commit: e8ee0ae6038f8298e2195812eea9d7b1196748ae
     executable: scip
     clients: [codex, claude, opencode]
     risk: medium

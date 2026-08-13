@@ -51,12 +51,12 @@ function finding(id: string, capability: string, status: Finding["status"], summ
   return { id, capability, status, summary, ...(remediation ? { remediation } : {}) };
 }
 
-export async function runDoctor(home: string, root = findProjectRoot()): Promise<Finding[]> {
+export async function runDoctor(home: string, root = findProjectRoot(), presetOverride?: string): Promise<Finding[]> {
   const started = Date.now();
   const appPaths = resolveAppPaths(home);
   const checks: Finding[] = [];
   const userConfig = await loadUserConfig(home, root);
-  const preset = await loadPreset(root, userConfig.preset ?? "recommended");
+  const preset = await loadPreset(root, presetOverride ?? userConfig.preset ?? "recommended");
   const resolved = await resolveCapabilities(root, preset, userConfig);
   const transactionText = await readOptional(join(appPaths.appStateDir, "transaction.json"));
   if (transactionText) {
@@ -88,6 +88,7 @@ export async function runDoctor(home: string, root = findProjectRoot()): Promise
   const dependencies = await planDependencies({
     home,
     root,
+    ...(presetOverride ? { preset: presetOverride } : {}),
     dryRun: true,
     json: false,
     yes: false,
@@ -158,6 +159,31 @@ export async function runDoctor(home: string, root = findProjectRoot()): Promise
     checks.push(finding("opencode-context-mode", "context-protection", plugins.includes("context-mode") ? "pass" : "warning", plugins.includes("context-mode") ? "OpenCode context-mode plugin configured" : "OpenCode context-mode plugin missing"));
     checks.push(finding("opencode-serena", "semantic-code", Object.prototype.hasOwnProperty.call(mcp, "serena") ? "pass" : "warning", Object.prototype.hasOwnProperty.call(mcp, "serena") ? "OpenCode Serena MCP configured" : "OpenCode Serena MCP missing"));
     checks.push(finding("opencode-context7", "current-docs", Object.prototype.hasOwnProperty.call(mcp, "context7") ? "pass" : "warning", Object.prototype.hasOwnProperty.call(mcp, "context7") ? "OpenCode Context7 MCP configured" : "OpenCode Context7 MCP missing"));
+  }
+
+  const genericMcpProviders = Object.entries(resolved.selections).flatMap(([capability, selection]) => {
+    if (!capabilityIsActive(selection) || !selection.provider || ["serena", "context7"].includes(selection.provider)) return [];
+    const provider = resolved.providers[selection.provider];
+    return provider?.kind === "mcp" ? [{ capability, providerName: selection.provider, provider }] : [];
+  });
+  for (const { capability, providerName, provider } of genericMcpProviders) {
+    const serverName = provider.serverName ?? providerName;
+    const codexConfigured = new RegExp(`\\[mcp_servers\\.(?:"${serverName}"|${serverName})\\]`, "i").test(codexConfig);
+    const opencodeMcp = (opencode.mcp ?? {}) as Record<string, unknown>;
+    const integrations: Array<[ClientName, string, boolean]> = [
+      ["codex", "Codex", codexConfigured],
+      ["claude", "Claude Code", containsKeyDeep(claudeState, serverName)],
+      ["opencode", "OpenCode", Object.prototype.hasOwnProperty.call(opencodeMcp, serverName)],
+    ];
+    for (const [client, label, configured] of integrations) {
+      if (!found.has(client) || !provider.clients.includes(client)) continue;
+      checks.push(finding(
+        `${client}-${serverName}`,
+        capability,
+        configured ? "pass" : "warning",
+        configured ? `${label} ${serverName} MCP configured` : `${label} ${serverName} MCP missing`,
+      ));
+    }
   }
 
   const roots = { agents: join(appPaths.home, ".agents", "skills"), claude: join(appPaths.home, ".claude", "skills") };

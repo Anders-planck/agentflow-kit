@@ -87,6 +87,28 @@ test("doctor verifies configured clients and detects divergent skill copies", as
     ]) assert.equal(configuredChecks.find((check) => check.id === id)?.status, "pass", id);
     assert.equal(configuredChecks.find((check) => check.id === "skill-divergence")?.status, "warning");
     assert.match(configuredChecks.find((check) => check.id === "skill-divergence")?.summary ?? "", /divergent/);
+
+    await writeFile(join(home, ".codex", "config.toml"), [
+      '[plugins."context-mode@context-mode"]',
+      "[mcp_servers.serena]",
+      "[mcp_servers.context7]",
+      "[mcp_servers.probe]",
+      "[mcp_servers.chrome-devtools]",
+      "[mcp_servers.github]",
+    ].join("\n"), "utf8");
+    await writeFile(join(home, ".claude.json"), JSON.stringify({
+      mcp: { serena: {}, context7: {}, probe: {}, "chrome-devtools": {}, github: {} },
+    }), "utf8");
+    await writeFile(join(portableHome, "config", "opencode", "opencode.json"), JSON.stringify({
+      plugin: ["context-mode"],
+      mcp: { serena: {}, context7: {}, probe: {}, "chrome-devtools": {}, github: {} },
+    }), "utf8");
+    const fullChecks = await runDoctor(home, process.cwd(), "full");
+    for (const id of [
+      "codex-probe", "codex-chrome-devtools", "codex-github",
+      "claude-probe", "claude-chrome-devtools", "claude-github",
+      "opencode-probe", "opencode-chrome-devtools", "opencode-github",
+    ]) assert.equal(fullChecks.find((check) => check.id === id)?.status, "pass", id);
   } finally {
     process.env.PATH = originalPath;
     if (originalPortableHome === undefined) delete process.env.ORDITRA_PORTABLE_HOME;

@@ -35,9 +35,11 @@ orditra install --preset recommended --yes
 orditra doctor
 ```
 
-At installation time Orditra inventories the executables required by the active preset. Missing dependencies are shown with their pinned version/source and proposed package-manager command, then require a separate confirmation before configuration is applied. `--dry-run` only previews them; `--yes` approves safe required dependency installers; `--skip-dependencies` leaves them untouched and reports the resulting missing capability. Package-manager changes are external to Orditra and are not removed by `orditra rollback` or `uninstall`. Optional, project-only, authenticated, and high-risk providers are never mass-installed by the global installer.
+At installation time Orditra inventories the executables required by the active preset. Missing dependencies are shown with their pinned version/source and proposed package-manager command, then require a separate confirmation before configuration is applied. `--dry-run` only previews them; `--yes` approves required dependency installers; `--skip-dependencies` leaves them untouched and reports the resulting missing capability. Package-manager changes are external to Orditra and are not removed by `orditra rollback` or `uninstall`. The `recommended` and `minimal` presets keep authenticated and high-risk providers opt-in; selecting `full` is explicit consent to activate and install every provider listed by that preset.
 
-Snyk Agent Scan is registered but disabled by default because it is authenticated and requires `SNYK_TOKEN`. To opt in, configure `agent-supply-chain.mode: auto`, install the pinned `snyk-agent-scan` provider, and supply the token through the environment rather than a versioned configuration file. Immutable commit, license, and content-digest verification remains active for external skills even when Agent Scan is not enabled.
+Human terminal output uses a four-stage flow for install and update: preflight, dependency installation, configuration planning, and reversible application. Item-level progress bars are also shown for rollback, uninstall, and garbage collection. Non-interactive logs receive stable progress lines, while `--json` remains machine-readable and contains no decorative output. Large skill-link plans are summarized in terminal output; use `--json` for the exact per-path plan.
+
+Snyk Agent Scan is registered but disabled in the default `recommended` preset because it is authenticated and requires `SNYK_TOKEN`. Selecting `full` or configuring `agent-supply-chain.mode: auto` activates it; supply the token through the environment rather than a versioned configuration file. Immutable commit, license, and content-digest verification remains active for external skills even when Agent Scan is not enabled.
 
 To test the Codex plugin directly from GitHub:
 
@@ -65,7 +67,7 @@ npm link
 | --- | --- |
 | `minimal` | local-only policy and workflow layer; networked providers remain registered or off |
 | `recommended` | context protection, semantic and structural code work, current docs, evidence, and supply-chain checks |
-| `full` | all broadly useful profiles registered, while authenticated and high-risk providers remain opt-in |
+| `full` | explicit maximum-capability mode: all 26 registered capabilities are active, including authenticated and high-risk integrations |
 
 Preview any change before applying it:
 

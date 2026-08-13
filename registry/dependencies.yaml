@@ -38,6 +38,20 @@ dependencies:
         requires: winget
         command: winget
         args: [install, --id, astral-sh.uv, --exact, --accept-source-agreements, --accept-package-agreements]
+  go:
+    description: Pinned-source builds for ToolHive and the SCIP command-line tool.
+    source: https://go.dev/
+    requiredBy: [hardened-mcp, persistent-symbol-graph]
+    satisfiedBy: [go]
+    installers:
+      - platforms: [darwin, linux]
+        requires: brew
+        command: brew
+        args: [install, go]
+      - platforms: [win32]
+        requires: winget
+        command: winget
+        args: [install, --id, GoLang.Go, --exact, --accept-source-agreements, --accept-package-agreements]
   ast-grep:
     description: AST-aware structural code search and controlled rewrites.
     source: https://github.com/ast-grep/ast-grep
@@ -50,6 +64,66 @@ dependencies:
         requires: npm
         command: npm
         args: [install, --global, "@ast-grep/cli@0.43.0"]
+  repomix:
+    description: Token-budgeted repository packing and map generation.
+    source: https://www.npmjs.com/package/repomix
+    version: 1.18.0
+    commit: e3b15a406ed78d8a463620a032a059ce911bfc0e
+    requiredBy: [repository-map]
+    satisfiedBy: [repomix]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: npm
+        command: npm
+        args: [install, --global, "repomix@1.18.0"]
+  probe:
+    description: Local large-code search and MCP context engine.
+    source: https://www.npmjs.com/package/@probelabs/probe
+    version: 0.6.0-rc88
+    commit: 868bae31b6141093e7e51c6a22322c99d972e0a8
+    requiredBy: [large-code-search]
+    satisfiedBy: [probe]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: npm
+        command: npm
+        args: [install, --global, "@probelabs/probe@0.6.0-rc88"]
+  playwright-cli:
+    description: Token-efficient browser automation for coding agents.
+    source: https://www.npmjs.com/package/@playwright/cli
+    version: 0.1.18
+    commit: e2d8f311f38a4828fc44a1026481481442ed962b
+    requiredBy: [browser-qa]
+    satisfiedBy: [playwright-cli]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: npm
+        command: npm
+        args: [install, --global, "@playwright/cli@0.1.18"]
+  chrome-devtools-mcp:
+    description: Chrome inspection, browser debugging, and performance MCP server.
+    source: https://www.npmjs.com/package/chrome-devtools-mcp
+    version: 1.7.0
+    commit: b58c613f4b05ade36bbf0d6ba44d5a525ec4d19a
+    requiredBy: [web-performance]
+    satisfiedBy: [chrome-devtools-mcp]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: npm
+        command: npm
+        args: [install, --global, "chrome-devtools-mcp@1.7.0"]
+  dependency-cruiser:
+    description: JavaScript and TypeScript dependency architecture analysis.
+    source: https://www.npmjs.com/package/dependency-cruiser
+    version: 18.2.0
+    commit: ec603451d07d699280234808f91c4c8d3813f6e8
+    requiredBy: [dependency-architecture]
+    satisfiedBy: [depcruise]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: npm
+        command: npm
+        args: [install, --global, "dependency-cruiser@18.2.0"]
   agent-scan:
     description: Agent, MCP, prompt, and skill supply-chain scanning.
     source: https://pypi.org/project/snyk-agent-scan/
@@ -85,3 +159,126 @@ dependencies:
         requires: go
         command: go
         args: [install, "github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.5.0"]
+  zizmor:
+    description: Static analysis for GitHub Actions workflows.
+    source: https://crates.io/crates/zizmor
+    version: 1.29.0
+    commit: b4393f9e92dcff49337fdba0a491e20640073a60
+    requiredBy: [action-security]
+    satisfiedBy: [zizmor]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: cargo
+        command: cargo
+        args: [install, zizmor, --version, 1.29.0, --locked]
+      - platforms: [darwin, linux]
+        requires: brew
+        command: brew
+        args: [install, zizmor]
+  promptfoo:
+    description: LLM evaluation and red-team workflow runner.
+    source: https://www.npmjs.com/package/promptfoo
+    version: 0.122.0
+    commit: be44f8389bcd234e7144861957f670548ce85326
+    requiredBy: [evals]
+    satisfiedBy: [promptfoo]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: npm
+        command: npm
+        args: [install, --global, "promptfoo@0.122.0"]
+  qmd:
+    description: Local BM25, vector, and reranked knowledge search.
+    source: https://www.npmjs.com/package/@tobilu/qmd
+    version: 2.5.3
+    commit: 53232770867ccb16538c2c6034e7d891dffc9ce3
+    requiredBy: [local-knowledge]
+    satisfiedBy: [qmd]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: npm
+        command: npm
+        args: [install, --global, "@tobilu/qmd@2.5.3"]
+  toolhive:
+    description: Hardened MCP execution, policy, and lifecycle management.
+    source: https://github.com/stacklok/toolhive
+    commit: 52ad2932e0b41f2ad7cb37ac50abddd3556252c7
+    requiredBy: [hardened-mcp]
+    satisfiedBy: [thv]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: go
+        command: go
+        args: [install, "github.com/stacklok/toolhive/cmd/thv@52ad2932e0b41f2ad7cb37ac50abddd3556252c7"]
+  semgrep:
+    description: Multi-language static analysis and deep security scanning.
+    source: https://pypi.org/project/semgrep/
+    version: 1.172.0
+    commit: 4fadea628509108b6b8b621236779f37bf52a08e
+    requiredBy: [deep-security]
+    satisfiedBy: [semgrep]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: uv
+        command: uv
+        args: [tool, install, "semgrep==1.172.0"]
+      - platforms: [darwin, linux, win32]
+        requires: pipx
+        command: pipx
+        args: [install, "semgrep==1.172.0"]
+  d2:
+    description: Polished architecture and report diagram export.
+    source: https://github.com/d2lang/d2
+    version: 0.8.1
+    commit: 0a1b5d9be6f6956169c8a4e49f8b3a51bdf9ad9a
+    requiredBy: [visual-export]
+    satisfiedBy: [d2]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: go
+        command: go
+        args: [install, "github.com/d2lang/d2@v0.8.1"]
+      - platforms: [darwin, linux]
+        requires: brew
+        command: brew
+        args: [install, d2]
+  trivy:
+    description: Container image, filesystem, and repository vulnerability scanning.
+    source: https://github.com/aquasecurity/trivy
+    version: 0.73.0
+    commit: 40c73e5d6166dcc0346a1ab4e94499d1572854e4
+    requiredBy: [container-security]
+    satisfiedBy: [trivy]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: go
+        command: go
+        args: [install, "github.com/aquasecurity/trivy/cmd/trivy@v0.73.0"]
+      - platforms: [darwin, linux]
+        requires: brew
+        command: brew
+        args: [install, trivy]
+  joern:
+    description: Code property graph construction and querying.
+    source: https://github.com/joernio/joern
+    version: 4.0.600
+    commit: d661fa90174a423c5e9aa871280bd023b5ac526f
+    requiredBy: [code-property-graph]
+    satisfiedBy: [joern]
+    installers:
+      - platforms: [darwin, linux]
+        requires: brew
+        command: brew
+        args: [install, joern]
+  scip:
+    description: Language-agnostic persistent symbol graph tooling.
+    source: https://github.com/scip-code/scip
+    version: 0.9.0
+    commit: e8ee0ae6038f8298e2195812eea9d7b1196748ae
+    requiredBy: [persistent-symbol-graph]
+    satisfiedBy: [scip]
+    installers:
+      - platforms: [darwin, linux, win32]
+        requires: go
+        command: go
+        args: [install, "github.com/scip-code/scip/cmd/scip@v0.9.0"]

@@ -11,6 +11,7 @@ import { directoryDigest, planSymlink, readOptional, unique } from "./planning/s
 import { planCliProviderNotices } from "./providers/cli.js";
 import { planContextMode } from "./providers/context-mode.js";
 import { planContext7 } from "./providers/context7.js";
+import { planMcpProvider } from "./providers/mcp.js";
 import { planSerena } from "./providers/serena.js";
 import { loadPreset, loadSkillSources, packageVersion } from "./registry.js";
 import type { ClientName, GlobalOptions, InstallPlan, PlanItem, Preset } from "./types.js";
@@ -152,6 +153,24 @@ export async function buildInstallPlan(options: GlobalOptions): Promise<InstallP
     const endpoint = providerName ? resolved.providers[providerName]?.endpoint : undefined;
     if (!endpoint) throw new Error("Current-docs provider has no endpoint");
     opencodeText = planContext7({ items, clients, endpoint, codexConfig, claudeState, opencode, opencodeText });
+  }
+  const plannedMcpProviders = new Set(["serena", "context7"]);
+  for (const selection of Object.values(resolved.selections)) {
+    if (!capabilityIsActive(selection) || !selection.provider || plannedMcpProviders.has(selection.provider)) continue;
+    const provider = resolved.providers[selection.provider];
+    if (provider?.kind !== "mcp") continue;
+    opencodeText = planMcpProvider({
+      items,
+      clients,
+      providerName: selection.provider,
+      provider,
+      codexConfig,
+      claudeState,
+      opencode,
+      opencodeText,
+      ...(options.assumedExecutables ? { assumedExecutables: options.assumedExecutables } : {}),
+    });
+    plannedMcpProviders.add(selection.provider);
   }
   if (clients.opencode && opencodeText !== originalOpencodeText) {
     items.push({ kind: "write", id: "opencode-config", description: "Merge Orditra integrations into OpenCode", target: configPaths.opencode, content: opencodeText });

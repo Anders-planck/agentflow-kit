@@ -1,7 +1,7 @@
 import { findExecutable, runCommand } from "./commands.js";
 import { capabilityIsActive, resolveCapabilities } from "./capabilities.js";
 import { loadDependencyRegistry, loadPreset } from "./registry.js";
-import type { DependencyDefinition, DependencyPlanItem, GlobalOptions } from "./types.js";
+import type { DependencyDefinition, DependencyPlanItem, GlobalOptions, ProgressCallback } from "./types.js";
 import { loadUserConfig } from "./user-config.js";
 
 export interface DependencyPlan {
@@ -11,6 +11,7 @@ export interface DependencyPlan {
 interface RuntimeSelection {
   platform?: NodeJS.Platform;
   pathValue?: string;
+  assumedExecutables?: string[];
 }
 
 export function selectDependencyInstaller(
@@ -19,13 +20,14 @@ export function selectDependencyInstaller(
 ): { command: string; args: string[] } | undefined {
   const platform = runtime.platform ?? process.platform;
   const pathValue = runtime.pathValue ?? process.env.PATH ?? "";
+  const assumed = new Set(runtime.assumedExecutables ?? []);
   for (const installer of definition.installers) {
     if (installer.platforms && !installer.platforms.includes(platform)) continue;
-    const required = findExecutable(installer.requires, pathValue);
+    const required = findExecutable(installer.requires, pathValue) ?? (assumed.has(installer.requires) ? installer.requires : null);
     if (!required) continue;
     const command = installer.command === installer.requires
       ? required
-      : findExecutable(installer.command, pathValue);
+      : findExecutable(installer.command, pathValue) ?? (assumed.has(installer.command) ? installer.command : null);
     if (command) return { command, args: installer.args };
   }
   return undefined;
@@ -43,6 +45,7 @@ export async function planDependencies(
     .filter(([name, selection]) => capabilityIsActive(selection) && !(name === "external-skills" && options.skipExternal))
     .map(([name]) => name));
   const pathValue = runtime.pathValue ?? process.env.PATH ?? "";
+  const assumed = new Set<string>();
   const items = Object.entries(registry.dependencies).flatMap(([name, definition]): DependencyPlanItem[] => {
     const requiredBy = definition.requiredBy.filter((capability) => active.has(capability));
     if (!requiredBy.length) return [];
@@ -58,7 +61,8 @@ export async function planDependencies(
         status: "satisfied",
       }];
     }
-    const spec = selectDependencyInstaller(definition, runtime);
+    const spec = selectDependencyInstaller(definition, { ...runtime, assumedExecutables: [...assumed] });
+    if (spec) for (const executable of definition.satisfiedBy) assumed.add(executable);
     return [{
       name,
       description: definition.description,
@@ -78,10 +82,15 @@ export function assumedDependencyExecutables(plan: DependencyPlan): string[] {
   return [...new Set(plan.items.filter((item) => item.status === "missing").flatMap((item) => item.satisfiedBy))];
 }
 
-export function applyDependencies(plan: DependencyPlan): void {
+export function applyDependencies(plan: DependencyPlan, onProgress?: ProgressCallback): void {
   const unresolved = plan.items.filter((item) => item.status === "unresolved");
   if (unresolved.length) {
     throw new Error(`No safe installer is available for required dependencies: ${unresolved.map((item) => item.name).join(", ")}`);
   }
-  for (const item of plan.items) if (item.status === "missing" && item.spec) runCommand(item.spec);
+  const installable = plan.items.filter((item) => item.status === "missing" && item.spec);
+  for (const [index, item] of installable.entries()) {
+    onProgress?.(index, installable.length, `Installing ${item.name}`);
+    runCommand(item.spec!);
+    onProgress?.(index + 1, installable.length, `Installed ${item.name}`);
+  }
 }

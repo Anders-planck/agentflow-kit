@@ -4,6 +4,16 @@ All notable changes follow Keep a Changelog. Versions follow Semantic Versioning
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-13
+
+### Changed
+
+- The `full` preset now activates all 26 registered capabilities, including project-scoped, authenticated, high-risk, security, visual, symbol-graph, and hook providers.
+- Full installs inventory all 20 executable dependencies required by that catalog, with pinned package versions or immutable source commits where the upstream installer supports them.
+- Probe, Chrome DevTools, and GitHub MCP are rendered through Codex, Claude Code, and OpenCode adapters when `full` is selected.
+- `orditra --preset full doctor` now diagnoses the requested preset, including generic MCP client integration, instead of silently falling back to the configured default.
+- Install, update, diff, rollback, uninstall, and garbage-collection flows now use staged human output and item-level progress bars while preserving clean JSON output for automation.
+
 ## [0.2.0] - 2026-08-13
 
 ### Added
