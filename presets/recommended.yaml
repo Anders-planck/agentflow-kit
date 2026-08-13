@@ -11,9 +11,8 @@ capabilities:
   current-docs: { mode: auto, provider: context7 }
   repository-map: { mode: registered, provider: repomix }
   evidence-report: { mode: always }
-  agent-supply-chain: { mode: auto, provider: agent-scan }
+  agent-supply-chain: { mode: registered, provider: agent-scan }
   dependency-vulnerability: { mode: auto, provider: osv-scanner }
   action-security: { mode: project, provider: zizmor }
 externalSkillSets:
   - mattpocock-core
-

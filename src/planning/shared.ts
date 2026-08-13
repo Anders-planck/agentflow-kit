@@ -33,13 +33,21 @@ export function unique<T>(values: T[]): T[] {
   return [...new Set(values)];
 }
 
+function compareDigestNames(left: string, right: string): number {
+  const foldedLeft = left.toLowerCase();
+  const foldedRight = right.toLowerCase();
+  if (foldedLeft < foldedRight) return -1;
+  if (foldedLeft > foldedRight) return 1;
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 export async function directoryDigest(path: string): Promise<string | null> {
   const hash = createHash("sha256");
   try {
     async function visit(directory: string, prefix = ""): Promise<void> {
-      const entries = (await readdir(directory, { withFileTypes: true })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+      const entries = (await readdir(directory, { withFileTypes: true })).sort((a, b) => compareDigestNames(a.name, b.name));
       for (const entry of entries) {
-        const relativePath = join(prefix, entry.name);
+        const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
         const absolute = join(directory, entry.name);
         if (entry.isDirectory()) await visit(absolute, relativePath);
         else if (entry.isFile()) {

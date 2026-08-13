@@ -3,6 +3,7 @@ import { cp, lstat, mkdir, mkdtemp, readFile, readdir, readlink, rename, rm, sym
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 
+import { capabilityIsActive } from "./capabilities.js";
 import { findExecutable, runCommand } from "./commands.js";
 import { loadSkillSources, packageVersion } from "./registry.js";
 import { resolveAppPaths, resolveLegacyAppPaths } from "./paths.js";
@@ -118,7 +119,11 @@ async function saveManifestPointers(appPaths: AppPaths, entries: Array<{ path: s
   await Promise.all(legacyPointers.map((path) => rm(path, { force: true })));
 }
 
-async function installExternalSkills(item: Extract<PlanItem, { kind: "external-skills" }>, root: string): Promise<void> {
+async function installExternalSkills(
+  item: Extract<PlanItem, { kind: "external-skills" }>,
+  root: string,
+  scan: boolean,
+): Promise<void> {
   const registry = await loadSkillSources(root);
   const source = registry.sources[item.sourceName];
   const paths = source?.sets[item.skillSet];
@@ -144,11 +149,13 @@ async function installExternalSkills(item: Extract<PlanItem, { kind: "external-s
       if (!expected) throw new Error(`Missing content digest for external skill ${item.sourceName}:${path}`);
       if (actual !== expected) throw new Error(`Content digest mismatch for external skill ${item.sourceName}:${path}`);
     }
-    const agentScan = findExecutable("snyk-agent-scan");
-    const uvx = findExecutable("uvx");
-    for (const path of paths) {
-      if (agentScan) runCommand({ command: agentScan, args: [join(temporary, path)] });
-      else if (uvx) runCommand({ command: uvx, args: ["snyk-agent-scan@0.5.17", join(temporary, path)] });
+    if (scan) {
+      if (!process.env.SNYK_TOKEN) throw new Error("Agent Scan is active but SNYK_TOKEN is not configured");
+      const agentScan = findExecutable("snyk-agent-scan");
+      if (!agentScan) throw new Error("Agent Scan is active but snyk-agent-scan is unavailable on PATH");
+      for (const path of paths) {
+        runCommand({ command: agentScan, args: [join(temporary, path)] });
+      }
     }
     await mkdir(item.target, { recursive: true });
     for (const path of paths) {
@@ -185,6 +192,7 @@ export async function applyPlan(plan: InstallPlan, options: GlobalOptions): Prom
   const snapshotTargets = new Set<string>();
   const commands: AppliedCommand[] = [];
   const ownedSymlinks: string[] = [];
+  const scanExternalSkills = capabilityIsActive(plan.capabilities["agent-supply-chain"]);
   const journalPath = join(appPaths.appStateDir, "transaction.json");
   await atomicWrite(journalPath, `${JSON.stringify({ schemaVersion: 1, status: "applying", startedAt: new Date().toISOString(), items: actionable.map((item) => item.id) }, null, 2)}\n`);
 
@@ -212,7 +220,7 @@ export async function applyPlan(plan: InstallPlan, options: GlobalOptions): Prom
           await cp(item.source, item.target, { recursive: true, preserveTimestamps: true });
           break;
         case "external-skills":
-          await installExternalSkills(item, options.root);
+          await installExternalSkills(item, options.root, scanExternalSkills);
           break;
         case "command":
           runCommand(item.spec);

@@ -37,6 +37,8 @@ orditra doctor
 
 At installation time Orditra inventories the executables required by the active preset. Missing dependencies are shown with their pinned version/source and proposed package-manager command, then require a separate confirmation before configuration is applied. `--dry-run` only previews them; `--yes` approves safe required dependency installers; `--skip-dependencies` leaves them untouched and reports the resulting missing capability. Package-manager changes are external to Orditra and are not removed by `orditra rollback` or `uninstall`. Optional, project-only, authenticated, and high-risk providers are never mass-installed by the global installer.
 
+Snyk Agent Scan is registered but disabled by default because it is authenticated and requires `SNYK_TOKEN`. To opt in, configure `agent-supply-chain.mode: auto`, install the pinned `snyk-agent-scan` provider, and supply the token through the environment rather than a versioned configuration file. Immutable commit, license, and content-digest verification remains active for external skills even when Agent Scan is not enabled.
+
 To test the Codex plugin directly from GitHub:
 
 ```bash

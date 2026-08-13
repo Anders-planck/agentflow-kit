@@ -91,8 +91,8 @@ capabilities:
   agent-supply-chain:
     description: Scan skills, prompts, hooks, and MCP configuration before activation.
     defaultProvider: agent-scan
-    defaultMode: auto
-    risk: low
+    defaultMode: registered
+    risk: high
     skills: [agent-supply-chain]
   dependency-vulnerability:
     description: Multi-ecosystem dependency vulnerability scanning.

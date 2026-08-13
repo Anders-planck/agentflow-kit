@@ -55,7 +55,7 @@ dependencies:
     source: https://pypi.org/project/snyk-agent-scan/
     version: 0.5.17
     requiredBy: [agent-supply-chain]
-    satisfiedBy: [snyk-agent-scan, uvx]
+    satisfiedBy: [snyk-agent-scan]
     installers:
       - platforms: [darwin, linux, win32]
         requires: uv

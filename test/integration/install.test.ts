@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { chmod, cp, lstat, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import test from "node:test";
 
 import { applyPlan, rollbackLatest, uninstallAll } from "../../src/executor.js";
 import { buildInstallPlan } from "../../src/planner.js";
-import type { GlobalOptions } from "../../src/types.js";
+import { loadPreset } from "../../src/registry.js";
+import type { GlobalOptions, InstallPlan } from "../../src/types.js";
 
 const root = process.cwd();
 
@@ -177,5 +179,101 @@ test("recommended plan configures Context7 through every client adapter", async 
   } finally {
     process.env.PATH = originalPath;
     await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("external skill installation verifies canonical digests and gates authenticated scanning", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "orditra-external-digest-"));
+  const home = join(workspace, "home");
+  const source = join(workspace, "source");
+  const toolkit = join(workspace, "toolkit");
+  const target = join(home, "release", "skills");
+  const originalPath = process.env.PATH;
+  const originalSnykToken = process.env.SNYK_TOKEN;
+  try {
+    const locator = process.platform === "win32" ? "where" : "which";
+    const git = execFileSync(locator, ["git"], { encoding: "utf8" }).trim().split(/\r?\n/)[0];
+    assert.ok(git);
+    const bin = join(workspace, "bin");
+    await mkdir(bin, { recursive: true });
+    await symlink(git, join(bin, basename(git)));
+    const agentScan = join(bin, "snyk-agent-scan");
+    await writeFile(agentScan, "#!/bin/sh\nexit 9\n", "utf8");
+    await chmod(agentScan, 0o755);
+    process.env.PATH = bin;
+
+    await mkdir(join(source, "skills", "ask", "agents"), { recursive: true });
+    await writeFile(join(source, "LICENSE"), "MIT\n", "utf8");
+    await writeFile(join(source, "skills", "ask", "SKILL.md"), "skill\n", "utf8");
+    await writeFile(join(source, "skills", "ask", "agents", "reviewer.md"), "reviewer\n", "utf8");
+    execFileSync("git", ["-C", source, "init", "--quiet"]);
+    execFileSync("git", ["-C", source, "config", "user.name", "Orditra Test"]);
+    execFileSync("git", ["-C", source, "config", "user.email", "test@orditra.invalid"]);
+    execFileSync("git", ["-C", source, "add", "."]);
+    execFileSync("git", ["-C", source, "commit", "--quiet", "-m", "fixture"]);
+    const commit = execFileSync("git", ["-C", source, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+
+    await mkdir(join(toolkit, "registry"), { recursive: true });
+    await writeFile(join(toolkit, "package.json"), `${JSON.stringify({ version: "0.2.0" })}\n`, "utf8");
+    await writeFile(join(toolkit, "registry", "skill-sources.lock.yaml"), [
+      "schemaVersion: 1",
+      "sources:",
+      "  fixture:",
+      `    repository: ${JSON.stringify(source)}`,
+      `    commit: ${commit}`,
+      "    version: 1.0.0",
+      "    license: MIT",
+      "    licensePath: LICENSE",
+      "    licenseDigest: adc37366f403835c1470ab2df93d3837d4719372fc1ef8593d922e06f033f8b2",
+      "    reviewedAt: 2026-08-13",
+      "    risk: low",
+      "    permissions:",
+      "      network: false",
+      "      hooks: false",
+      "      writesOutsideProject: false",
+      "    contentDigests:",
+      "      skills/ask: e891cdec364074bee6d395450d4a21305ed0be6dc08764ae206b175ea4eef2b7",
+      "    sets:",
+      "      fixture:",
+      "        - skills/ask",
+      "",
+    ].join("\n"), "utf8");
+
+    const preset = await loadPreset(root, "minimal");
+    const plan: InstallPlan = {
+      preset,
+      clients: { codex: false, claude: false, opencode: false },
+      capabilities: preset.capabilities,
+      releaseDir: join(home, "release"),
+      items: [{
+        kind: "external-skills",
+        id: "external-fixture",
+        description: "Install fixture external skill",
+        target,
+        sourceName: "fixture",
+        skillSet: "fixture",
+      }],
+    };
+    const options: GlobalOptions = { home, root: toolkit, dryRun: false, json: false, yes: true, skipExternal: false };
+    await applyPlan(plan, options);
+    assert.equal(await readFile(join(target, "ask", "SKILL.md"), "utf8"), "skill\n");
+    assert.equal(await readFile(join(target, "ask", "agents", "reviewer.md"), "utf8"), "reviewer\n");
+
+    delete process.env.SNYK_TOKEN;
+    const scanPlan: InstallPlan = {
+      ...plan,
+      capabilities: {
+        ...plan.capabilities,
+        "agent-supply-chain": { mode: "auto", provider: "agent-scan" },
+      },
+    };
+    await assert.rejects(applyPlan(scanPlan, options), /SNYK_TOKEN is not configured/);
+    process.env.SNYK_TOKEN = "test-token";
+    await assert.rejects(applyPlan(scanPlan, options), /Command failed/);
+  } finally {
+    process.env.PATH = originalPath;
+    if (originalSnykToken === undefined) delete process.env.SNYK_TOKEN;
+    else process.env.SNYK_TOKEN = originalSnykToken;
+    await rm(workspace, { recursive: true, force: true });
   }
 });

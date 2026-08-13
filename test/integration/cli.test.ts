@@ -35,7 +35,7 @@ test("CLI preserves command and flag version surfaces", () => {
   }
 });
 
-test("install dry-run reports active dependency provenance without mutating", async () => {
+test("install dry-run reports active dependency provenance and skips registered providers without mutating", async () => {
   const home = await mkdtemp(join(tmpdir(), "orditra-cli-dependencies-"));
   try {
     const output = runCli([
@@ -47,7 +47,7 @@ test("install dry-run reports active dependency provenance without mutating", as
     ], home);
     const plan = JSON.parse(output) as { dependencies: Array<{ name: string; source: string; requiredBy: string[] }> };
     assert.ok(plan.dependencies.some((item) => item.name === "ast-grep" && item.source === "https://github.com/ast-grep/ast-grep"));
-    assert.ok(plan.dependencies.some((item) => item.requiredBy.includes("agent-supply-chain")));
+    assert.equal(plan.dependencies.some((item) => item.requiredBy.includes("agent-supply-chain")), false);
   } finally { await rm(home, { recursive: true, force: true }); }
 });
 

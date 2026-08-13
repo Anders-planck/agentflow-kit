@@ -109,14 +109,26 @@ export async function runDoctor(home: string, root = findProjectRoot()): Promise
     if (!provider?.executable || provider.kind === "mcp" && selection.provider === "serena") continue;
     const aliases = selection.provider === "ast-grep"
       ? ["sg", "ast-grep"]
-      : selection.provider === "agent-scan" ? ["snyk-agent-scan", "uvx"] : [provider.executable];
+      : [provider.executable];
     const executable = aliases.map((name) => findExecutable(name)).find(Boolean);
+    const credentialsReady = selection.provider !== "agent-scan" || Boolean(process.env.SNYK_TOKEN);
+    const ready = Boolean(executable && credentialsReady);
+    const summary = !executable
+      ? `${selection.provider} is active but unavailable on PATH`
+      : !credentialsReady
+        ? `${selection.provider} is active but SNYK_TOKEN is not configured`
+        : `${selection.provider} available: ${versionOf(executable)}`;
+    const remediation = !executable
+      ? `Install the pinned provider or set ${capability}.mode to registered/off.`
+      : !credentialsReady
+        ? `Set SNYK_TOKEN or set ${capability}.mode to registered/off.`
+        : undefined;
     checks.push(finding(
       `provider-${selection.provider}`,
       capability,
-      executable ? "pass" : "warning",
-      executable ? `${selection.provider} available: ${versionOf(executable)}` : `${selection.provider} is active but unavailable on PATH`,
-      executable ? undefined : `Install the pinned provider or set ${capability}.mode to registered/off.`,
+      ready ? "pass" : "warning",
+      summary,
+      remediation,
     ));
   }
 
