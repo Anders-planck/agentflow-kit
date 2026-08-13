@@ -45,7 +45,7 @@ test("interactive full install explains Snyk setup and asks for a hidden runtime
   assert.equal(environment.SNYK_TOKEN, "runtime-only-token");
   assert.equal(prompts.length, 1);
   assert.match(prompts[0] ?? "", /input hidden/i);
-  assert.match(messages.join("\n"), new RegExp(SNYK_ACCOUNT_URL.replaceAll(".", "\\.")));
+  assert.ok(messages.join("\n").includes(SNYK_ACCOUNT_URL));
   assert.match(messages.join("\n"), /process only/i);
   assert.doesNotMatch(messages.join("\n"), /runtime-only-token/);
 });
@@ -55,7 +55,7 @@ test("non-interactive full install gives complete token acquisition and runtime 
     ensureAgentScanToken({ environment: {}, interactive: false }),
     (error: Error) => {
       assert.match(error.message, /SNYK_TOKEN/);
-      assert.match(error.message, new RegExp(SNYK_ACCOUNT_URL.replaceAll(".", "\\.")));
+      assert.ok(error.message.includes(SNYK_ACCOUNT_URL));
       assert.match(error.message, /read -s SNYK_TOKEN/);
       assert.match(error.message, /orditra --preset full install/);
       return true;
