@@ -14,6 +14,16 @@ export interface ProgressFlow {
   fail(message: string): void;
 }
 
+const reportedErrors = new WeakSet<object>();
+
+export function markCliErrorReported(error: unknown): void {
+  if (typeof error === "object" && error !== null) reportedErrors.add(error);
+}
+
+export function cliErrorWasReported(error: unknown): boolean {
+  return typeof error === "object" && error !== null && reportedErrors.has(error);
+}
+
 export function renderProgressBar(completed: number, total: number, width = 20): string {
   const safeWidth = Math.max(1, Math.floor(width));
   const ratio = total <= 0 ? 1 : Math.min(1, Math.max(0, completed / total));

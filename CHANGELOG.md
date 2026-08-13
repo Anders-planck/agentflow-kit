@@ -4,6 +4,15 @@ All notable changes follow Keep a Changelog. Versions follow Semantic Versioning
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-08-13
+
+### Fixed
+
+- Interactive `full` installs now explain where to obtain the Snyk API token and request it through a hidden prompt instead of failing immediately.
+- Prompted credentials exist only in the current Orditra process and are never written to configuration, reports, logs, or the repository.
+- Non-interactive installs now provide secure runtime setup commands and the official Snyk account URL.
+- Human progress failures are no longer printed a second time by the global CLI error handler.
+
 ## [0.2.1] - 2026-08-13
 
 ### Changed

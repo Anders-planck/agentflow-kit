@@ -10,6 +10,7 @@ import { registerLifecycleCommands } from "./cli/lifecycle.js";
 import { createCliProgram } from "./cli/options.js";
 import { registerProjectCommands } from "./cli/project.js";
 import { registerSkillCommands } from "./cli/skills.js";
+import { cliErrorWasReported } from "./cli/progress.js";
 import { findProjectRoot } from "./paths.js";
 
 const root = findProjectRoot();
@@ -26,6 +27,6 @@ registerSkillCommands(program);
 registerValidationCommands(program);
 
 program.parseAsync(process.argv).catch((error: unknown) => {
-  console.error(`orditra: ${(error as Error).message}`);
+  if (!cliErrorWasReported(error)) console.error(`orditra: ${(error as Error).message}`);
   process.exitCode = 1;
 });

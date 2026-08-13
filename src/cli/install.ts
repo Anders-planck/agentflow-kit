@@ -4,9 +4,10 @@ import { applyDependencies, assumedDependencyExecutables, planDependencies } fro
 import { applyPlan } from "../executor.js";
 import { buildInstallPlan } from "../planner.js";
 import type { GlobalOptions } from "../types.js";
+import { ensureAgentScanToken } from "./credentials.js";
 import { globalOptions } from "./options.js";
 import { confirm, printDependencies, printPlan } from "./output.js";
-import { createProgressFlow } from "./progress.js";
+import { createProgressFlow, markCliErrorReported } from "./progress.js";
 
 async function install(options: GlobalOptions, operation: "Install" | "Update" | "Diff"): Promise<void> {
   const progress = createProgressFlow(operation, !options.json);
@@ -17,8 +18,11 @@ async function install(options: GlobalOptions, operation: "Install" | "Update" |
     const pendingDependencies = dependencyPlan.items.filter((item) => item.status !== "satisfied");
     if (!options.json) printDependencies(dependencyPlan.items);
 
-    if (!options.dryRun && dependencyPlan.items.some((item) => item.name === "agent-scan") && !process.env.SNYK_TOKEN) {
-      throw new Error("Agent Scan is active but SNYK_TOKEN is not configured; set it in the environment before applying this preset");
+    if (!options.dryRun && dependencyPlan.items.some((item) => item.name === "agent-scan")) {
+      await ensureAgentScanToken({
+        interactive: !options.json && Boolean(process.stdin.isTTY && process.stdout.isTTY),
+        write: (message) => progress.info(message),
+      });
     }
 
     let assumedExecutables: string[] = [];
@@ -52,7 +56,10 @@ async function install(options: GlobalOptions, operation: "Install" | "Update" |
     const manifest = await applyPlan(plan, options, (completed, total, label) => progress.update(completed, total, label));
     progress.finish(manifest ? `Applied with backup: ${manifest.backupDir}` : "No changes applied.");
   } catch (error) {
-    progress.fail((error as Error).message);
+    if (!options.json) {
+      progress.fail((error as Error).message);
+      markCliErrorReported(error);
+    }
     throw error;
   }
 }
