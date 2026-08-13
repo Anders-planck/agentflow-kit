@@ -39,7 +39,15 @@ At installation time Orditra inventories the executables required by the active 
 
 Human terminal output uses a four-stage flow for install and update: preflight, dependency installation, configuration planning, and reversible application. Item-level progress bars are also shown for rollback, uninstall, and garbage collection. Non-interactive logs receive stable progress lines, while `--json` remains machine-readable and contains no decorative output. Large skill-link plans are summarized in terminal output; use `--json` for the exact per-path plan.
 
-Snyk Agent Scan is registered but disabled in the default `recommended` preset because it is authenticated and requires `SNYK_TOKEN`. Selecting `full` or configuring `agent-supply-chain.mode: auto` activates it; supply the token through the environment rather than a versioned configuration file. Immutable commit, license, and content-digest verification remains active for external skills even when Agent Scan is not enabled.
+Snyk Agent Scan is registered but disabled in the default `recommended` preset because it is authenticated and requires `SNYK_TOKEN`. Selecting `full` or configuring `agent-supply-chain.mode: auto` activates it. In an interactive terminal Orditra explains how to obtain the token from [Snyk account settings](https://app.snyk.io/account) and requests it through a hidden prompt. The value is loaded only into the current Orditra process and is never persisted. For non-interactive runs, set it at runtime without placing the value in shell history:
+
+```bash
+read -s SNYK_TOKEN
+export SNYK_TOKEN
+orditra --preset full install
+```
+
+Never put the token in a versioned configuration file. Immutable commit, license, and content-digest verification remains active for external skills even when Agent Scan is not enabled.
 
 To test the Codex plugin directly from GitHub:
 

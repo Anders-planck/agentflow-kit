@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createProgressFlow, renderProgressBar } from "../../src/cli/progress.js";
+import { cliErrorWasReported, createProgressFlow, markCliErrorReported, renderProgressBar } from "../../src/cli/progress.js";
+
+test("progress error reporting marks only Error objects", () => {
+  const error = new Error("already shown");
+  assert.equal(cliErrorWasReported(error), false);
+  markCliErrorReported(error);
+  assert.equal(cliErrorWasReported(error), true);
+  markCliErrorReported("plain failure");
+  assert.equal(cliErrorWasReported("plain failure"), false);
+});
 
 test("progress bars clamp values and render a stable percentage", () => {
   assert.equal(renderProgressBar(0, 4, 10), "░░░░░░░░░░   0%");

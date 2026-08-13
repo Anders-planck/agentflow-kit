@@ -2,7 +2,7 @@ import type { Command } from "commander";
 
 import { garbageCollect, rollbackLatest, uninstallAll } from "../executor.js";
 import { globalOptions } from "./options.js";
-import { createProgressFlow } from "./progress.js";
+import { createProgressFlow, markCliErrorReported } from "./progress.js";
 
 export function registerLifecycleCommands(program: Command): void {
   program.command("rollback").description("restore the latest pre-install snapshot").action(async () => {
@@ -15,7 +15,10 @@ export function registerLifecycleCommands(program: Command): void {
       if (options.json) console.log(JSON.stringify(manifest, null, 2));
       else progress.finish(`${options.dryRun ? "Would restore" : "Restored"} ${manifest.snapshots.length} paths from ${manifest.backupDir}`);
     } catch (error) {
-      progress.fail((error as Error).message);
+      if (!options.json) {
+        progress.fail((error as Error).message);
+        markCliErrorReported(error);
+      }
       throw error;
     }
   });
@@ -33,7 +36,10 @@ export function registerLifecycleCommands(program: Command): void {
       else if (preview) progress.finish(`Would unwind ${manifests.length} changesets and restore ${paths} paths; pass --yes to apply`);
       else progress.finish(`Uninstalled Orditra by unwinding ${manifests.length} changesets`);
     } catch (error) {
-      progress.fail((error as Error).message);
+      if (!options.json) {
+        progress.fail((error as Error).message);
+        markCliErrorReported(error);
+      }
       throw error;
     }
   });
@@ -55,7 +61,10 @@ export function registerLifecycleCommands(program: Command): void {
           progress.finish(`${options.dryRun ? "Would remove" : "Removed"} ${result.removed.length} orphan paths`);
         }
       } catch (error) {
-        progress.fail((error as Error).message);
+        if (!options.json) {
+          progress.fail((error as Error).message);
+          markCliErrorReported(error);
+        }
         throw error;
       }
     });

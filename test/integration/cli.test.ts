@@ -76,16 +76,19 @@ test("doctor honors an explicit full preset", async () => {
 
 test("full install fails before dependency mutation when required credentials are missing", async () => {
   const home = await mkdtemp(join(tmpdir(), "orditra-cli-full-credentials-"));
-  const originalSnykToken = process.env.SNYK_TOKEN;
   try {
-    delete process.env.SNYK_TOKEN;
-    assert.throws(
-      () => runCli(["--home", home, "--preset", "full", "--yes", "install"], home, { PATH: "" }),
-      /SNYK_TOKEN is not configured/,
-    );
+    const environment: NodeJS.ProcessEnv = { ...process.env, PATH: "", ORDITRA_PORTABLE_HOME: join(home, ".orditra-portable") };
+    delete environment.SNYK_TOKEN;
+    const result = spawnSync(process.execPath, ["dist/src/cli.js", "--home", home, "--preset", "full", "--yes", "install"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      env: environment,
+    });
+    assert.equal(result.status, 1);
+    const output = `${result.stdout}\n${result.stderr}`;
+    assert.match(output, /SNYK_TOKEN.*app\.snyk\.io\/account.*read -s SNYK_TOKEN.*orditra --preset full install/s);
+    assert.equal((output.match(/Agent Scan requires SNYK_TOKEN\./g) ?? []).length, 1);
   } finally {
-    if (originalSnykToken === undefined) delete process.env.SNYK_TOKEN;
-    else process.env.SNYK_TOKEN = originalSnykToken;
     await rm(home, { recursive: true, force: true });
   }
 });
