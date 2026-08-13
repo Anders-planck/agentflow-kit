@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -16,6 +16,19 @@ function runCli(args: string[], home?: string, environment: NodeJS.ProcessEnv = 
       ...environment,
     },
   });
+}
+
+function runCliWithFindings(args: string[], home?: string): string {
+  const result = spawnSync(process.execPath, ["dist/src/cli.js", ...args], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      ...(home ? { ORDITRA_PORTABLE_HOME: join(home, ".orditra-portable") } : {}),
+    },
+  });
+  if (result.error) throw result.error;
+  return result.stdout;
 }
 
 test("CLI exposes schema-driven commands and machine-readable maps", () => {
@@ -55,7 +68,7 @@ test("install dry-run reports active dependency provenance and skips registered 
 test("doctor honors an explicit full preset", async () => {
   const home = await mkdtemp(join(tmpdir(), "orditra-cli-doctor-full-"));
   try {
-    const checks = JSON.parse(runCli(["--home", home, "--preset", "full", "--json", "doctor"], home)) as Array<{ id: string }>;
+    const checks = JSON.parse(runCliWithFindings(["--home", home, "--preset", "full", "--json", "doctor"], home)) as Array<{ id: string }>;
     assert.ok(checks.some((check) => check.id === "dependency-repomix"));
     assert.ok(checks.some((check) => check.id === "dependency-agent-scan"));
   } finally { await rm(home, { recursive: true, force: true }); }
