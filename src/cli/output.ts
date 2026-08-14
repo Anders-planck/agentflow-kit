@@ -50,6 +50,7 @@ export function printDependencies(items: DependencyPlanItem[]): void {
     console.log(`│           ${item.description}`);
     console.log(`│           Source: ${item.source}`);
     if (item.spec) console.log(`│           Command: ${formatCommand(item.spec)}`);
+    if (item.remediation) console.log(`│           Requirement: ${item.remediation}`);
   }
 }
 

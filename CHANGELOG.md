@@ -4,6 +4,14 @@ All notable changes follow Keep a Changelog. Versions follow Semantic Versioning
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-08-14
+
+### Fixed
+
+- Full installs on macOS now prefer the official Homebrew package for Zizmor instead of compiling it with an otherwise incompatible local Rust toolchain.
+- Dependency installers can declare minimum toolchain versions, so incompatible source builds are rejected during preflight before any dependency mutation begins.
+- Terminal, JSON, and doctor output now report the concrete missing or incompatible prerequisite when no safe installer is available.
+
 ## [0.2.2] - 2026-08-13
 
 ### Fixed

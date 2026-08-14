@@ -100,7 +100,7 @@ export async function runDoctor(home: string, root = findProjectRoot(), presetOv
       dependency.requiredBy.join(","),
       dependency.status === "satisfied" ? "pass" : dependency.status === "missing" ? "warning" : "error",
       dependency.status === "satisfied" ? `${dependency.name} dependency is available` : `${dependency.name} dependency is required but unavailable`,
-      dependency.spec ? `Run ${formatCommand(dependency.spec)} or rerun orditra install and approve dependency installation.` : "Install it manually or disable the requiring capability.",
+      dependency.spec ? `Run ${formatCommand(dependency.spec)} or rerun orditra install and approve dependency installation.` : dependency.remediation ?? "Install it manually or disable the requiring capability.",
     ));
   }
 
