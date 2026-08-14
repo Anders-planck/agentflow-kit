@@ -32,7 +32,8 @@ async function install(options: GlobalOptions, operation: "Install" | "Update" |
       else {
         const unresolved = pendingDependencies.filter((item) => item.status === "unresolved");
         if (unresolved.length) {
-          throw new Error(`No safe installer is available for required dependencies: ${unresolved.map((item) => item.name).join(", ")}. Install them manually or pass --skip-dependencies to inspect the remaining plan.`);
+          const details = unresolved.map((item) => item.remediation ? `${item.name} (${item.remediation})` : item.name).join(", ");
+          throw new Error(`No safe installer is available for required dependencies: ${details}. Install them manually or pass --skip-dependencies to inspect the remaining plan.`);
         }
         if (!options.yes && !(await confirm("Install the missing required dependencies? [y/N] "))) {
           throw new Error("Dependency installation cancelled; pass --yes to approve or --skip-dependencies to continue without it");

@@ -167,11 +167,19 @@ dependencies:
     requiredBy: [action-security]
     satisfiedBy: [zizmor]
     installers:
+      - platforms: [darwin]
+        requires: brew
+        command: brew
+        args: [install, zizmor]
       - platforms: [darwin, linux, win32]
         requires: cargo
         command: cargo
         args: [install, zizmor, --version, 1.29.0, --locked]
-      - platforms: [darwin, linux]
+        versionCheck:
+          command: rustc
+          args: [--version]
+          minimum: 1.97.0
+      - platforms: [linux]
         requires: brew
         command: brew
         args: [install, zizmor]

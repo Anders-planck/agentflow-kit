@@ -1,6 +1,6 @@
 {
   "name": "orditra",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "One reversible configuration fabric for Codex, Claude Code, and OpenCode.",
   "type": "module",
   "bin": {

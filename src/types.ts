@@ -54,6 +54,11 @@ export interface DependencyInstaller {
   requires: string;
   command: string;
   args: string[];
+  versionCheck?: {
+    command: string;
+    args: string[];
+    minimum: string;
+  };
 }
 
 export interface DependencyDefinition {
@@ -81,6 +86,7 @@ export interface DependencyPlanItem {
   satisfiedBy: string[];
   status: "satisfied" | "missing" | "unresolved";
   spec?: CommandSpec;
+  remediation?: string;
 }
 
 export interface ProfileDefinition {

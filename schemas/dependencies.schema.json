@@ -28,7 +28,17 @@
                 "platforms": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["aix", "android", "darwin", "freebsd", "haiku", "linux", "openbsd", "sunos", "win32", "cygwin", "netbsd"] } },
                 "requires": { "type": "string", "minLength": 1 },
                 "command": { "type": "string", "minLength": 1 },
-                "args": { "type": "array", "items": { "type": "string" } }
+                "args": { "type": "array", "items": { "type": "string" } },
+                "versionCheck": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["command", "args", "minimum"],
+                  "properties": {
+                    "command": { "type": "string", "minLength": 1 },
+                    "args": { "type": "array", "items": { "type": "string" } },
+                    "minimum": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+                  }
+                }
               }
             }
           }

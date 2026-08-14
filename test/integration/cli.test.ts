@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -63,6 +63,61 @@ test("install dry-run reports active dependency provenance and skips registered 
     assert.ok(plan.dependencies.some((item) => item.name === "ast-grep" && item.source === "https://github.com/ast-grep/ast-grep"));
     assert.equal(plan.dependencies.some((item) => item.requiredBy.includes("agent-supply-chain")), false);
   } finally { await rm(home, { recursive: true, force: true }); }
+});
+
+test("full install preflight prefers the Homebrew zizmor package on macOS", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-cli-zizmor-home-"));
+  const bin = await mkdtemp(join(tmpdir(), "orditra-cli-zizmor-bin-"));
+  try {
+    for (const executable of ["brew", "cargo"]) {
+      const target = join(bin, executable);
+      await writeFile(target, "#!/bin/sh\nexit 0\n", "utf8");
+      await chmod(target, 0o755);
+    }
+    const output = runCli([
+      "--home", home,
+      "--preset", "full",
+      "--dry-run",
+      "--json",
+      "install",
+    ], home, { PATH: bin });
+    const plan = JSON.parse(output) as { dependencies: Array<{ name: string; spec?: { command: string; args: string[] } }> };
+    const zizmor = plan.dependencies.find((item) => item.name === "zizmor");
+    assert.equal(zizmor?.spec?.command, join(bin, "brew"));
+    assert.deepEqual(zizmor?.spec?.args, ["install", "zizmor"]);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(bin, { recursive: true, force: true });
+  }
+});
+
+test("full install preflight rejects an incompatible Rust toolchain before mutation", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-cli-rust-home-"));
+  const bin = await mkdtemp(join(tmpdir(), "orditra-cli-rust-bin-"));
+  try {
+    const cargo = join(bin, "cargo");
+    const rustc = join(bin, "rustc");
+    await writeFile(cargo, "#!/bin/sh\nexit 0\n", "utf8");
+    await writeFile(rustc, "#!/bin/sh\necho 'rustc 1.94.0 (test)'\n", "utf8");
+    await chmod(cargo, 0o755);
+    await chmod(rustc, 0o755);
+    const output = runCli([
+      "--home", home,
+      "--preset", "full",
+      "--dry-run",
+      "--json",
+      "install",
+    ], home, { PATH: bin });
+    const plan = JSON.parse(output) as {
+      dependencies: Array<{ name: string; status: string; remediation?: string }>;
+    };
+    const zizmor = plan.dependencies.find((item) => item.name === "zizmor");
+    assert.equal(zizmor?.status, "unresolved");
+    assert.match(zizmor?.remediation ?? "", /rustc 1\.94\.0.*requires >= 1\.97\.0/i);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(bin, { recursive: true, force: true });
+  }
 });
 
 test("doctor honors an explicit full preset", async () => {
