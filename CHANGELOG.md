@@ -4,6 +4,12 @@ All notable changes follow Keep a Changelog. Versions follow Semantic Versioning
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-08-15
+
+### Fixed
+
+- Release-tag validation now exercises artifact transport and response-policy branches, keeping branch coverage safely above the required 80% threshold across CI environments.
+
 ## [0.2.4] - 2026-08-15
 
 ### Added
