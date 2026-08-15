@@ -69,3 +69,43 @@ test("release artifacts fail closed on checksum mismatch", async () => {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("release artifacts reject insecure transport and unsafe responses", async () => {
+  const originalFetch = globalThis.fetch;
+  const tar = findExecutable("tar");
+  assert.ok(tar);
+  const spec = {
+    kind: "artifact" as const,
+    url: "https://example.test/scip.tar.gz",
+    sha256: "0".repeat(64),
+    archive: "tar.gz" as const,
+    executable: "scip",
+    target: join(tmpdir(), "orditra-artifact-policy-target", "scip"),
+    extractor: tar,
+  };
+
+  try {
+    await assert.rejects(installVerifiedArtifact({
+      ...spec,
+      url: "http://example.test/scip.tar.gz",
+    }), /must use HTTPS/);
+
+    globalThis.fetch = async () => new Response(null, { status: 503 });
+    await assert.rejects(installVerifiedArtifact(spec), /HTTP 503/);
+
+    globalThis.fetch = async () => {
+      const response = new Response(Buffer.from("redirected"), { status: 200 });
+      Object.defineProperty(response, "url", { value: "http://example.test/scip.tar.gz" });
+      return response;
+    };
+    await assert.rejects(installVerifiedArtifact(spec), /redirected away from HTTPS/);
+
+    globalThis.fetch = async () => new Response(null, {
+      status: 200,
+      headers: { "content-length": String(256 * 1024 * 1024 + 1) },
+    });
+    await assert.rejects(installVerifiedArtifact(spec), /exceeds 268435456 bytes/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
