@@ -4,6 +4,24 @@ All notable changes follow Keep a Changelog. Versions follow Semantic Versioning
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-08-15
+
+### Added
+
+- Dependency commands can declare non-secret runtime environment requirements, which are applied without replacing the parent process environment and rendered explicitly in human previews.
+- Checksummed release-asset installation verifies HTTPS, SHA-256, archive paths and entry types before publishing a single executable atomically.
+
+### Changed
+
+- Trivy is updated to 0.74.0 at immutable commit `e1fd17a0ea4a8cf24bc4b4dd7e2cfbf4bb31b994` and now prefers its official Homebrew package on macOS and Linux.
+- The Trivy Go fallback enables the upstream-required `GOEXPERIMENT=jsonv2` build environment.
+- SCIP 0.9.0 installs from official per-platform release assets and recorded SHA-256 digests instead of the unsupported `go install package@version` path.
+
+### Fixed
+
+- Full installs no longer fail while compiling Trivy because `encoding/json/v2` was excluded by Go build constraints.
+- Full installs no longer fail on SCIP because its pinned module contains a local `replace` directive that Go rejects for versioned package installation.
+
 ## [0.2.3] - 2026-08-14
 
 ### Fixed

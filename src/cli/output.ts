@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline/promises";
 
+import { isArtifactInstallSpec } from "../artifact-installer.js";
 import { formatCommand } from "../commands.js";
 import { outputFindings } from "../reporting.js";
 import type { DependencyPlanItem, Finding, GlobalOptions, InstallPlan, PlanItem } from "../types.js";
@@ -49,7 +50,11 @@ export function printDependencies(items: DependencyPlanItem[]): void {
     console.log(`│   ${action.padEnd(7)} ${item.name} · ${pin}`);
     console.log(`│           ${item.description}`);
     console.log(`│           Source: ${item.source}`);
-    if (item.spec) console.log(`│           Command: ${formatCommand(item.spec)}`);
+    if (item.spec && isArtifactInstallSpec(item.spec)) {
+      console.log(`│           Artifact: ${item.spec.url}`);
+      console.log(`│           Checksum: sha256:${item.spec.sha256}`);
+      console.log(`│           Target: ${item.spec.target}`);
+    } else if (item.spec) console.log(`│           Command: ${formatCommand(item.spec)}`);
     if (item.remediation) console.log(`│           Requirement: ${item.remediation}`);
   }
 }

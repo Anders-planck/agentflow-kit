@@ -51,9 +51,18 @@ export interface ProviderRegistry {
 
 export interface DependencyInstaller {
   platforms?: NodeJS.Platform[];
-  requires: string;
-  command: string;
-  args: string[];
+  architectures?: NodeJS.Architecture[];
+  requires?: string;
+  command?: string;
+  args?: string[];
+  environment?: Record<string, string>;
+  artifact?: {
+    url: string;
+    sha256: string;
+    archive: "tar.gz";
+    executable: string;
+    target: "go-bin";
+  };
   versionCheck?: {
     command: string;
     args: string[];
@@ -85,7 +94,7 @@ export interface DependencyPlanItem {
   requiredBy: string[];
   satisfiedBy: string[];
   status: "satisfied" | "missing" | "unresolved";
-  spec?: CommandSpec;
+  spec?: DependencyInstallSpec;
   remediation?: string;
 }
 
@@ -176,10 +185,25 @@ export interface AppPaths {
 export interface CommandSpec {
   command: string;
   args: string[];
+  environment?: Record<string, string>;
   inverse?: CommandSpec;
   cwd?: string;
   timeoutMs?: number;
 }
+
+export interface ArtifactInstallSpec {
+  kind: "artifact";
+  url: string;
+  sha256: string;
+  archive: "tar.gz";
+  executable: string;
+  target: string;
+  extractor: string;
+  command?: undefined;
+  args?: undefined;
+}
+
+export type DependencyInstallSpec = CommandSpec | ArtifactInstallSpec;
 
 export type PlanItem =
   | { kind: "write"; id: string; description: string; target: string; content: string }

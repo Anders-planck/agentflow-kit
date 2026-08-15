@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
 import { capabilityIsActive, resolveCapabilities } from "./capabilities.js";
+import { isArtifactInstallSpec } from "./artifact-installer.js";
 import { findExecutable, formatCommand } from "./commands.js";
 import { planDependencies } from "./dependencies.js";
 import { parseJsonc } from "./jsonc.js";
@@ -100,7 +101,11 @@ export async function runDoctor(home: string, root = findProjectRoot(), presetOv
       dependency.requiredBy.join(","),
       dependency.status === "satisfied" ? "pass" : dependency.status === "missing" ? "warning" : "error",
       dependency.status === "satisfied" ? `${dependency.name} dependency is available` : `${dependency.name} dependency is required but unavailable`,
-      dependency.spec ? `Run ${formatCommand(dependency.spec)} or rerun orditra install and approve dependency installation.` : dependency.remediation ?? "Install it manually or disable the requiring capability.",
+      dependency.spec
+        ? isArtifactInstallSpec(dependency.spec)
+          ? `Rerun orditra install to download the checksummed release artifact into ${dependency.spec.target}.`
+          : `Run ${formatCommand(dependency.spec)} or rerun orditra install and approve dependency installation.`
+        : dependency.remediation ?? "Install it manually or disable the requiring capability.",
     ));
   }
 

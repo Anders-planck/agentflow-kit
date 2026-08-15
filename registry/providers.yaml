@@ -269,8 +269,8 @@ providers:
     description: Optional container, filesystem, and IaC security scanner.
     kind: cli
     source: https://github.com/aquasecurity/trivy
-    version: 0.73.0
-    commit: 40c73e5d6166dcc0346a1ab4e94499d1572854e4
+    version: 0.74.0
+    commit: e1fd17a0ea4a8cf24bc4b4dd7e2cfbf4bb31b994
     executable: trivy
     clients: [codex, claude, opencode]
     risk: medium

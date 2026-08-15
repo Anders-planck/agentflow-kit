@@ -36,6 +36,7 @@ export function runCommand(spec: CommandSpec): CommandResult {
   const started = Date.now();
   const result = spawnSync(spec.command, spec.args, {
     ...(spec.cwd ? { cwd: spec.cwd } : {}),
+    ...(spec.environment ? { env: { ...process.env, ...spec.environment } } : {}),
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
     timeout: spec.timeoutMs ?? 120_000,
@@ -52,7 +53,11 @@ export function runCommand(spec: CommandSpec): CommandResult {
 }
 
 export function formatCommand(spec: CommandSpec): string {
-  return [spec.command, ...spec.args].map((value, index) => shellQuote(index > 0 && /token|secret|password|api[-_]?key/i.test(spec.args[index - 2] ?? "") ? "[REDACTED]" : value)).join(" ");
+  const environment = Object.entries(spec.environment ?? {}).sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, value]) => `${name}=${shellQuote(/token|secret|password|api[-_]?key/i.test(name) ? "[REDACTED]" : value)}`);
+  const command = [spec.command, ...spec.args]
+    .map((value, index) => shellQuote(index > 0 && /token|secret|password|api[-_]?key/i.test(spec.args[index - 2] ?? "") ? "[REDACTED]" : value));
+  return [...environment, ...command].join(" ");
 }
 
 function shellQuote(value: string): string {

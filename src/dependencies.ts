@@ -1,7 +1,11 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+import { installVerifiedArtifact, isArtifactInstallSpec } from "./artifact-installer.js";
 import { findExecutable, runCommand } from "./commands.js";
 import { capabilityIsActive, resolveCapabilities } from "./capabilities.js";
 import { loadDependencyRegistry, loadPreset } from "./registry.js";
-import type { CommandSpec, DependencyDefinition, DependencyPlanItem, GlobalOptions, ProgressCallback } from "./types.js";
+import type { DependencyDefinition, DependencyInstallSpec, DependencyPlanItem, GlobalOptions, ProgressCallback } from "./types.js";
 import { loadUserConfig } from "./user-config.js";
 
 export interface DependencyPlan {
@@ -10,12 +14,14 @@ export interface DependencyPlan {
 
 interface RuntimeSelection {
   platform?: NodeJS.Platform;
+  architecture?: NodeJS.Architecture;
+  home?: string;
   pathValue?: string;
   assumedExecutables?: string[];
 }
 
 interface InstallerResolution {
-  spec?: CommandSpec;
+  spec?: DependencyInstallSpec;
   reasons: string[];
 }
 
@@ -34,11 +40,34 @@ function resolveDependencyInstaller(
   runtime: RuntimeSelection = {},
 ): InstallerResolution {
   const platform = runtime.platform ?? process.platform;
+  const architecture = runtime.architecture ?? process.arch;
+  const home = runtime.home ?? homedir();
   const pathValue = runtime.pathValue ?? process.env.PATH ?? "";
   const assumed = new Set(runtime.assumedExecutables ?? []);
   const reasons: string[] = [];
   for (const installer of definition.installers) {
     if (installer.platforms && !installer.platforms.includes(platform)) continue;
+    if (installer.architectures && !installer.architectures.includes(architecture)) continue;
+    if (installer.artifact) {
+      const extractor = findExecutable("tar", pathValue);
+      if (!extractor) {
+        reasons.push("tar is required to unpack the verified release artifact");
+        continue;
+      }
+      return {
+        spec: {
+          kind: "artifact",
+          url: installer.artifact.url,
+          sha256: installer.artifact.sha256,
+          archive: installer.artifact.archive,
+          executable: installer.artifact.executable,
+          target: join(home, "go", "bin", installer.artifact.executable),
+          extractor,
+        },
+        reasons,
+      };
+    }
+    if (!installer.requires || !installer.command || !installer.args) continue;
     const required = findExecutable(installer.requires, pathValue) ?? (assumed.has(installer.requires) ? installer.requires : null);
     if (!required) {
       reasons.push(`${installer.requires} is not available on PATH`);
@@ -75,7 +104,14 @@ function resolveDependencyInstaller(
         continue;
       }
     }
-    return { spec: { command, args: installer.args }, reasons };
+    return {
+      spec: {
+        command,
+        args: installer.args,
+        ...(installer.environment ? { environment: installer.environment } : {}),
+      },
+      reasons,
+    };
   }
   return { reasons };
 }
@@ -83,7 +119,7 @@ function resolveDependencyInstaller(
 export function selectDependencyInstaller(
   definition: DependencyDefinition,
   runtime: RuntimeSelection = {},
-): { command: string; args: string[] } | undefined {
+): DependencyInstallSpec | undefined {
   return resolveDependencyInstaller(definition, runtime).spec;
 }
 
@@ -115,7 +151,7 @@ export async function planDependencies(
         status: "satisfied",
       }];
     }
-    const resolution = resolveDependencyInstaller(definition, { ...runtime, assumedExecutables: [...assumed] });
+    const resolution = resolveDependencyInstaller(definition, { home: options.home, ...runtime, assumedExecutables: [...assumed] });
     const spec = resolution.spec;
     if (spec) for (const executable of definition.satisfiedBy) assumed.add(executable);
     return [{
@@ -138,7 +174,7 @@ export function assumedDependencyExecutables(plan: DependencyPlan): string[] {
   return [...new Set(plan.items.filter((item) => item.status === "missing").flatMap((item) => item.satisfiedBy))];
 }
 
-export function applyDependencies(plan: DependencyPlan, onProgress?: ProgressCallback): void {
+export async function applyDependencies(plan: DependencyPlan, onProgress?: ProgressCallback): Promise<void> {
   const unresolved = plan.items.filter((item) => item.status === "unresolved");
   if (unresolved.length) {
     throw new Error(`No safe installer is available for required dependencies: ${unresolved.map((item) => item.remediation ? `${item.name} (${item.remediation})` : item.name).join(", ")}`);
@@ -146,7 +182,8 @@ export function applyDependencies(plan: DependencyPlan, onProgress?: ProgressCal
   const installable = plan.items.filter((item) => item.status === "missing" && item.spec);
   for (const [index, item] of installable.entries()) {
     onProgress?.(index, installable.length, `Installing ${item.name}`);
-    runCommand(item.spec!);
+    if (isArtifactInstallSpec(item.spec!)) await installVerifiedArtifact(item.spec!);
+    else runCommand(item.spec!);
     onProgress?.(index + 1, installable.length, `Installed ${item.name}`);
   }
 }

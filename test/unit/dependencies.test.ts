@@ -23,9 +23,9 @@ test("minimal preset requires no external executables", async () => {
   } finally { await rm(home, { recursive: true, force: true }); }
 });
 
-test("dependency installation reports item-level progress", () => {
+test("dependency installation reports item-level progress", async () => {
   const updates: string[] = [];
-  applyDependencies({ items: [{
+  await applyDependencies({ items: [{
     name: "example",
     description: "Example dependency",
     source: "https://example.test/dependency",
@@ -93,7 +93,7 @@ test("full dependency planning chains pinned tools behind an installable Go runt
     const byName = new Map(plan.items.map((item) => [item.name, item]));
     assert.equal(byName.get("go")?.spec?.command, brew);
     assert.equal(byName.get("toolhive")?.spec?.command, "go");
-    assert.equal(byName.get("scip")?.spec?.command, "go");
+    assert.equal(byName.get("d2")?.spec?.command, "go");
   } finally {
     await rm(home, { recursive: true, force: true });
     await rm(bin, { recursive: true, force: true });

@@ -253,19 +253,21 @@ dependencies:
   trivy:
     description: Container image, filesystem, and repository vulnerability scanning.
     source: https://github.com/aquasecurity/trivy
-    version: 0.73.0
-    commit: 40c73e5d6166dcc0346a1ab4e94499d1572854e4
+    version: 0.74.0
+    commit: e1fd17a0ea4a8cf24bc4b4dd7e2cfbf4bb31b994
     requiredBy: [container-security]
     satisfiedBy: [trivy]
     installers:
-      - platforms: [darwin, linux, win32]
-        requires: go
-        command: go
-        args: [install, "github.com/aquasecurity/trivy/cmd/trivy@v0.73.0"]
       - platforms: [darwin, linux]
         requires: brew
         command: brew
         args: [install, trivy]
+      - platforms: [darwin, linux, win32]
+        requires: go
+        command: go
+        args: [install, "github.com/aquasecurity/trivy/cmd/trivy@v0.74.0"]
+        environment:
+          GOEXPERIMENT: jsonv2
   joern:
     description: Code property graph construction and querying.
     source: https://github.com/joernio/joern
@@ -286,7 +288,35 @@ dependencies:
     requiredBy: [persistent-symbol-graph]
     satisfiedBy: [scip]
     installers:
-      - platforms: [darwin, linux, win32]
-        requires: go
-        command: go
-        args: [install, "github.com/scip-code/scip/cmd/scip@v0.9.0"]
+      - platforms: [darwin]
+        architectures: [arm64]
+        artifact:
+          url: https://github.com/scip-code/scip/releases/download/v0.9.0/scip-darwin-arm64.tar.gz
+          sha256: 3078af4c0a9e809089a0bba8befc618add950cf4e429e92c78392bb5d4c99c9a
+          archive: tar.gz
+          executable: scip
+          target: go-bin
+      - platforms: [darwin]
+        architectures: [x64]
+        artifact:
+          url: https://github.com/scip-code/scip/releases/download/v0.9.0/scip-darwin-amd64.tar.gz
+          sha256: 39d8b16cafd6b331532d935c230c7a8f3d03d83d50fa972be3ab269f2d8267e8
+          archive: tar.gz
+          executable: scip
+          target: go-bin
+      - platforms: [linux]
+        architectures: [arm64]
+        artifact:
+          url: https://github.com/scip-code/scip/releases/download/v0.9.0/scip-linux-arm64.tar.gz
+          sha256: e97aaf597ab6a6b6fbb1bbc43993e6efb596284aaea9c3fa5b20d75186367c5e
+          archive: tar.gz
+          executable: scip
+          target: go-bin
+      - platforms: [linux]
+        architectures: [x64]
+        artifact:
+          url: https://github.com/scip-code/scip/releases/download/v0.9.0/scip-linux-amd64.tar.gz
+          sha256: fc2e7273e110be9f35924da1066000183791e8bfdb0391355de6eaaa070fec75
+          archive: tar.gz
+          executable: scip
+          target: go-bin
