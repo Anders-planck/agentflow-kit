@@ -91,6 +91,91 @@ test("full install preflight prefers the Homebrew zizmor package on macOS", asyn
   }
 });
 
+test("full install preflight prefers the official Homebrew Trivy package", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-cli-trivy-home-"));
+  const bin = await mkdtemp(join(tmpdir(), "orditra-cli-trivy-bin-"));
+  try {
+    for (const executable of ["brew", "go"]) {
+      const target = join(bin, executable);
+      await writeFile(target, "#!/bin/sh\nexit 0\n", "utf8");
+      await chmod(target, 0o755);
+    }
+    const output = runCli([
+      "--home", home,
+      "--preset", "full",
+      "--dry-run",
+      "--json",
+      "install",
+    ], home, { PATH: bin });
+    const plan = JSON.parse(output) as { dependencies: Array<{ name: string; spec?: { command: string; args: string[] } }> };
+    const trivy = plan.dependencies.find((item) => item.name === "trivy");
+    assert.equal(trivy?.spec?.command, join(bin, "brew"));
+    assert.deepEqual(trivy?.spec?.args, ["install", "trivy"]);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(bin, { recursive: true, force: true });
+  }
+});
+
+test("full install preflight enables Trivy's required Go JSON experiment in the fallback", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-cli-trivy-go-home-"));
+  const bin = await mkdtemp(join(tmpdir(), "orditra-cli-trivy-go-bin-"));
+  try {
+    const go = join(bin, "go");
+    await writeFile(go, "#!/bin/sh\nexit 0\n", "utf8");
+    await chmod(go, 0o755);
+    const output = runCli([
+      "--home", home,
+      "--preset", "full",
+      "--dry-run",
+      "--json",
+      "install",
+    ], home, { PATH: bin });
+    const plan = JSON.parse(output) as {
+      dependencies: Array<{ name: string; spec?: { command: string; environment?: Record<string, string> } }>;
+    };
+    const trivy = plan.dependencies.find((item) => item.name === "trivy");
+    assert.equal(trivy?.spec?.command, go);
+    assert.deepEqual(trivy?.spec?.environment, { GOEXPERIMENT: "jsonv2" });
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(bin, { recursive: true, force: true });
+  }
+});
+
+test("full install preflight uses a checksummed official release asset for SCIP", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-cli-scip-home-"));
+  const bin = await mkdtemp(join(tmpdir(), "orditra-cli-scip-bin-"));
+  try {
+    for (const executable of ["go", "tar"]) {
+      const target = join(bin, executable);
+      await writeFile(target, "#!/bin/sh\nexit 0\n", "utf8");
+      await chmod(target, 0o755);
+    }
+    const output = runCli([
+      "--home", home,
+      "--preset", "full",
+      "--dry-run",
+      "--json",
+      "install",
+    ], home, { PATH: bin });
+    const plan = JSON.parse(output) as {
+      dependencies: Array<{
+        name: string;
+        spec?: { kind?: string; url?: string; sha256?: string; target?: string };
+      }>;
+    };
+    const scip = plan.dependencies.find((item) => item.name === "scip");
+    assert.equal(scip?.spec?.kind, "artifact");
+    assert.match(scip?.spec?.url ?? "", /scip-(?:darwin|linux)-(?:amd64|arm64)\.tar\.gz$/);
+    assert.match(scip?.spec?.sha256 ?? "", /^[a-f0-9]{64}$/);
+    assert.equal(scip?.spec?.target, join(home, "go", "bin", "scip"));
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(bin, { recursive: true, force: true });
+  }
+});
+
 test("full install preflight rejects an incompatible Rust toolchain before mutation", async () => {
   const home = await mkdtemp(join(tmpdir(), "orditra-cli-rust-home-"));
   const bin = await mkdtemp(join(tmpdir(), "orditra-cli-rust-bin-"));

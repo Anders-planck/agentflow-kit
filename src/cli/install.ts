@@ -38,7 +38,7 @@ async function install(options: GlobalOptions, operation: "Install" | "Update" |
         if (!options.yes && !(await confirm("Install the missing required dependencies? [y/N] "))) {
           throw new Error("Dependency installation cancelled; pass --yes to approve or --skip-dependencies to continue without it");
         }
-        applyDependencies(dependencyPlan, (completed, total, label) => progress.update(completed, total, label));
+        await applyDependencies(dependencyPlan, (completed, total, label) => progress.update(completed, total, label));
         const remaining = (await planDependencies(options)).items.filter((item) => item.status !== "satisfied");
         if (remaining.length) throw new Error(`Required dependencies are still unavailable after installation: ${remaining.map((item) => item.name).join(", ")}`);
       }

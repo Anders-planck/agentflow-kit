@@ -23,12 +23,33 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["requires", "command", "args"],
+              "oneOf": [
+                { "required": ["requires", "command", "args"], "not": { "required": ["artifact"] } },
+                { "required": ["artifact"], "not": { "anyOf": [{ "required": ["requires"] }, { "required": ["command"] }, { "required": ["args"] }] } }
+              ],
               "properties": {
                 "platforms": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["aix", "android", "darwin", "freebsd", "haiku", "linux", "openbsd", "sunos", "win32", "cygwin", "netbsd"] } },
+                "architectures": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["arm64", "x64"] } },
                 "requires": { "type": "string", "minLength": 1 },
                 "command": { "type": "string", "minLength": 1 },
                 "args": { "type": "array", "items": { "type": "string" } },
+                "environment": {
+                  "type": "object",
+                  "propertyNames": { "pattern": "^[A-Z_][A-Z0-9_]*$" },
+                  "additionalProperties": { "type": "string" }
+                },
+                "artifact": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["url", "sha256", "archive", "executable", "target"],
+                  "properties": {
+                    "url": { "type": "string", "pattern": "^https://" },
+                    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                    "archive": { "enum": ["tar.gz"] },
+                    "executable": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+                    "target": { "enum": ["go-bin"] }
+                  }
+                },
                 "versionCheck": {
                   "type": "object",
                   "additionalProperties": false,
