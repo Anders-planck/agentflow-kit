@@ -155,3 +155,95 @@ test("doctor reports missing credentials for explicitly enabled Agent Scan", asy
     await rm(home, { recursive: true, force: true });
   }
 });
+
+test("doctor uses provider-specific version probes and rejects failed probes", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-doctor-provider-probes-"));
+  const originalPath = process.env.PATH;
+  const originalPortableHome = process.env.ORDITRA_PORTABLE_HOME;
+  const originalSnykToken = process.env.SNYK_TOKEN;
+  const portableHome = join(home, "portable");
+  try {
+    const bin = join(home, "bin");
+    await mkdir(bin, { recursive: true });
+    const agentScan = join(bin, "snyk-agent-scan");
+    await writeFile(agentScan, [
+      "#!/bin/sh",
+      'if [ "$1" = "help" ]; then',
+      "  echo 'Snyk Agent Scan v0.5.17'",
+      "  exit 0",
+      "fi",
+      "echo 'error: unsupported probe' >&2",
+      "exit 2",
+      "",
+    ].join("\n"), "utf8");
+    await chmod(agentScan, 0o755);
+    const toolhive = join(bin, "thv");
+    await writeFile(toolhive, [
+      "#!/bin/sh",
+      'if [ "$1" = "version" ]; then',
+      "  echo 'ToolHive build-test'",
+      "  exit 0",
+      "fi",
+      "echo 'error: unknown flag' >&2",
+      "exit 2",
+      "",
+    ].join("\n"), "utf8");
+    await chmod(toolhive, 0o755);
+    process.env.PATH = bin;
+    process.env.ORDITRA_PORTABLE_HOME = portableHome;
+    process.env.SNYK_TOKEN = "test-token";
+
+    const checks = await runDoctor(home, process.cwd(), "full");
+    const agentProvider = checks.find((check) => check.id === "provider-agent-scan");
+    assert.equal(agentProvider?.status, "pass");
+    assert.match(agentProvider?.summary ?? "", /Snyk Agent Scan v0\.5\.17/);
+    const toolhiveProvider = checks.find((check) => check.id === "provider-toolhive");
+    assert.equal(toolhiveProvider?.status, "pass");
+    assert.match(toolhiveProvider?.summary ?? "", /ToolHive build-test/);
+
+    await writeFile(agentScan, "#!/bin/sh\necho 'probe failed' >&2\nexit 2\n", "utf8");
+    const failedChecks = await runDoctor(home, process.cwd(), "full");
+    const failedProvider = failedChecks.find((check) => check.id === "provider-agent-scan");
+    assert.equal(failedProvider?.status, "warning");
+    assert.match(failedProvider?.summary ?? "", /probe failed/i);
+  } finally {
+    process.env.PATH = originalPath;
+    if (originalPortableHome === undefined) delete process.env.ORDITRA_PORTABLE_HOME;
+    else process.env.ORDITRA_PORTABLE_HOME = originalPortableHome;
+    if (originalSnykToken === undefined) delete process.env.SNYK_TOKEN;
+    else process.env.SNYK_TOKEN = originalSnykToken;
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("doctor rejects silent and unlaunchable binary version probes", async () => {
+  const home = await mkdtemp(join(tmpdir(), "orditra-doctor-binary-probes-"));
+  const originalPath = process.env.PATH;
+  const originalPortableHome = process.env.ORDITRA_PORTABLE_HOME;
+  const portableHome = join(home, "portable");
+  try {
+    const bin = join(home, "bin");
+    await mkdir(bin, { recursive: true });
+    const silentNode = join(bin, "node");
+    await writeFile(silentNode, "#!/bin/sh\nexit 0\n", "utf8");
+    await chmod(silentNode, 0o755);
+    const brokenCodex = join(bin, "codex");
+    await writeFile(brokenCodex, "#!/definitely-missing-interpreter\n", "utf8");
+    await chmod(brokenCodex, 0o755);
+    process.env.PATH = bin;
+    process.env.ORDITRA_PORTABLE_HOME = portableHome;
+
+    const checks = await runDoctor(home, process.cwd());
+    const node = checks.find((check) => check.id === "binary-node");
+    assert.equal(node?.status, "warning");
+    assert.match(node?.summary ?? "", /no version output/i);
+    const codex = checks.find((check) => check.id === "binary-codex");
+    assert.equal(codex?.status, "warning");
+    assert.match(codex?.summary ?? "", /ENOENT|spawn/i);
+  } finally {
+    process.env.PATH = originalPath;
+    if (originalPortableHome === undefined) delete process.env.ORDITRA_PORTABLE_HOME;
+    else process.env.ORDITRA_PORTABLE_HOME = originalPortableHome;
+    await rm(home, { recursive: true, force: true });
+  }
+});

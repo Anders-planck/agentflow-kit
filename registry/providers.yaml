@@ -170,6 +170,7 @@ providers:
     version: 0.5.17
     commit: ea959964ce4728426fca9fa78c9e7809b972f313
     executable: snyk-agent-scan
+    versionArgs: [help]
     clients: [codex, claude, opencode]
     risk: high
     network: true
@@ -247,6 +248,7 @@ providers:
     source: https://github.com/stacklok/toolhive
     commit: 52ad2932e0b41f2ad7cb37ac50abddd3556252c7
     executable: thv
+    versionArgs: [version]
     clients: [codex, claude, opencode]
     risk: medium
     network: true

@@ -23,9 +23,19 @@ async function readOptional(path: string): Promise<string> {
   }
 }
 
-function versionOf(executable: string): string {
-  const result = spawnSync(executable, ["--version"], { encoding: "utf8", timeout: 5000 });
-  return `${result.stdout || result.stderr || "unknown"}`.trim().split("\n")[0] ?? "unknown";
+interface VersionProbe {
+  ok: boolean;
+  output: string;
+}
+
+function versionOf(executable: string, args = ["--version"]): VersionProbe {
+  const result = spawnSync(executable, args, { encoding: "utf8", timeout: 5000 });
+  const firstLine = `${result.stdout || result.stderr || ""}`.trim().split("\n").find(Boolean);
+  const output = firstLine ?? "no version output";
+  if (result.error) return { ok: false, output: result.error.message };
+  if (result.status !== 0) return { ok: false, output };
+  if (!firstLine) return { ok: false, output };
+  return { ok: true, output };
 }
 
 async function hashDirectory(path: string): Promise<string | null> {
@@ -82,7 +92,14 @@ export async function runDoctor(home: string, root = findProjectRoot(), presetOv
     const executable = findExecutable(binary);
     if (executable) {
       found.set(binary, executable);
-      checks.push(finding(`binary-${binary}`, capability, "pass", `${label}: ${versionOf(executable)}`));
+      const probe = versionOf(executable);
+      checks.push(finding(
+        `binary-${binary}`,
+        capability,
+        probe.ok ? "pass" : "warning",
+        `${label}: ${probe.output}`,
+        probe.ok ? undefined : `Verify that ${executable} can report its version.`,
+      ));
     }
   }
 
@@ -118,17 +135,22 @@ export async function runDoctor(home: string, root = findProjectRoot(), presetOv
       : [provider.executable];
     const executable = aliases.map((name) => findExecutable(name)).find(Boolean);
     const credentialsReady = selection.provider !== "agent-scan" || Boolean(process.env.SNYK_TOKEN);
-    const ready = Boolean(executable && credentialsReady);
+    const probe = executable && credentialsReady ? versionOf(executable, provider.versionArgs) : undefined;
+    const ready = Boolean(executable && credentialsReady && probe?.ok);
     const summary = !executable
       ? `${selection.provider} is active but unavailable on PATH`
       : !credentialsReady
         ? `${selection.provider} is active but SNYK_TOKEN is not configured`
-        : `${selection.provider} available: ${versionOf(executable)}`;
+        : !probe?.ok
+          ? `${selection.provider} version probe failed: ${probe?.output ?? "unknown error"}`
+          : `${selection.provider} available: ${probe.output}`;
     const remediation = !executable
       ? `Install the pinned provider or set ${capability}.mode to registered/off.`
       : !credentialsReady
         ? `Set SNYK_TOKEN or set ${capability}.mode to registered/off.`
-        : undefined;
+        : !probe?.ok
+          ? `Verify the pinned ${selection.provider} executable and its configured version probe.`
+          : undefined;
     checks.push(finding(
       `provider-${selection.provider}`,
       capability,

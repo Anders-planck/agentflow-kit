@@ -1,6 +1,6 @@
 {
   "name": "orditra",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "A reversible, context-efficient capability fabric for coding agents.",
   "author": {
     "name": "Anders-planck",

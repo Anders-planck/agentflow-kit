@@ -32,6 +32,7 @@ export interface ProviderDefinition {
   version?: string;
   commit?: string;
   executable?: string;
+  versionArgs?: string[];
   args?: string[];
   serverName?: string;
   transport?: "stdio" | "http";

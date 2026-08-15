@@ -4,6 +4,13 @@ All notable changes follow Keep a Changelog. Versions follow Semantic Versioning
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-08-15
+
+### Fixed
+
+- Provider health checks now honor provider-specific version arguments and treat non-zero probes as warnings instead of accepting error text as proof of availability.
+- Agent Scan is probed through `help`, while ToolHive is probed through `version`, eliminating misleading `usage` and `unknown flag` doctor results.
+
 ## [0.2.5] - 2026-08-15
 
 ### Fixed
