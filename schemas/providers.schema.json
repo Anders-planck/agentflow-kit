@@ -19,6 +19,7 @@
           "version": { "type": "string" },
           "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
           "executable": { "type": "string" },
+          "versionArgs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
           "args": { "type": "array", "items": { "type": "string" } },
           "serverName": { "type": "string", "pattern": "^[a-z0-9-]+$" },
           "transport": { "enum": ["stdio", "http"] },
